@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Volume2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface Word {
   word: string;
@@ -87,6 +89,16 @@ export default function WordList({
     setExposedAssociations(newExposedAssociations);
   };
 
+  const speakWord = (word: string) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "tl-PH"; // Tagalog language code
+      speechSynthesis.speak(utterance);
+    } else {
+      console.error("Text-to-speech not supported in this browser.");
+    }
+  };
+
   return (
     <div>
       {words.map((word, index) => (
@@ -94,7 +106,7 @@ export default function WordList({
           {mode === "regular" && (
             <div
               onDoubleClick={() => handleDoubleClick(index, word)}
-              className="p-2 border rounded cursor-pointer"
+              className="p-2 border rounded cursor-pointer flex items-center"
             >
               {editingIndex === index ? (
                 <>
@@ -142,6 +154,15 @@ export default function WordList({
                     {word.translation}
                   </span>
                   <span className="w-1/3 inline-block">{word.association}</span>
+                  <Button
+                    onClick={() => speakWord(word.word)}
+                    className="ml-2"
+                    size="icon"
+                    variant="outline"
+                    aria-label={`Pronounce ${word.word} in Tagalog`}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
                 </>
               )}
             </div>
@@ -175,6 +196,18 @@ export default function WordList({
               {exposedAssociations[index] && (
                 <span className="mr-2 w-1/3">{word.association}</span>
               )}
+              <Button
+                onClick={() =>
+                  speakWord(mode === "test" ? word.word : word.translation)
+                }
+                size="icon"
+                variant="outline"
+                aria-label={`Pronounce ${
+                  mode === "test" ? word.word : word.translation
+                } in Tagalog`}
+              >
+                <Volume2 className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>

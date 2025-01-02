@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
+import { Button } from "@/components/ui/Button";
 
 export default function CategoryPage() {
   const { name } = useParams();
@@ -28,30 +29,30 @@ export default function CategoryPage() {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">{name}</h1>
       <div className="mb-4">
-        <button
+        <Button
           onClick={() => setMode("regular")}
           className={`mr-2 p-2 ${
             mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
           } rounded`}
         >
           Regular
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setMode("test")}
           className={`mr-2 p-2 ${
             mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
           } rounded`}
         >
           Test
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setMode("testOpposite")}
           className={`p-2 ${
             mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
           } rounded`}
         >
           Test Opposite
-        </button>
+        </Button>
       </div>
       <WordList
         words={words}
