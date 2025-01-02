@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { ArrowLeft } from "lucide-react";
 
 export default function CategoryPage() {
+  const router = useRouter();
   const { name } = useParams();
   const [words, setWords] = useState<
     { word: string; translation: string; association: string }[]
@@ -14,6 +17,8 @@ export default function CategoryPage() {
   const [mode, setMode] = useState<"regular" | "test" | "testOpposite">(
     "regular"
   );
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [editedCategoryName, setEditedCategoryName] = useState(name as string);
 
   useEffect(() => {
     fetchWords();
@@ -25,31 +30,80 @@ export default function CategoryPage() {
     setWords(data);
   };
 
+  const handleCategoryNameUpdate = async () => {
+    if (editedCategoryName.trim() === "" || editedCategoryName === name) {
+      setIsEditingCategory(false);
+      return;
+    }
+
+    const response = await fetch("/api/categories", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        oldName: name,
+        newName: editedCategoryName,
+      }),
+    });
+
+    if (response.ok) {
+      setIsEditingCategory(false);
+      router.push(`/category/${editedCategoryName}`);
+    } else {
+      alert("Failed to update category name");
+    }
+  };
+
+  const handleGoBack = () => {
+    router.push("/");
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">{name}</h1>
+      <Button onClick={handleGoBack} variant="outline" className="mb-4">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+      </Button>
+      {isEditingCategory ? (
+        <div className="flex items-center mb-4">
+          <Input
+            type="text"
+            value={editedCategoryName}
+            onChange={(e) => setEditedCategoryName(e.target.value)}
+            className="text-3xl font-bold mr-2"
+          />
+          <Button onClick={handleCategoryNameUpdate}>Update</Button>
+        </div>
+      ) : (
+        <h1
+          className="text-3xl font-bold mb-4 cursor-pointer"
+          onDoubleClick={() => setIsEditingCategory(true)}
+        >
+          {name}
+        </h1>
+      )}
       <div className="mb-4">
         <Button
           onClick={() => setMode("regular")}
-          className={`mr-2 p-2 ${
+          className={`mr-2 ${
             mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
-          } rounded`}
+          }`}
         >
           Regular
         </Button>
         <Button
           onClick={() => setMode("test")}
-          className={`mr-2 p-2 ${
+          className={`mr-2 ${
             mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
-          } rounded`}
+          }`}
         >
           Test
         </Button>
         <Button
           onClick={() => setMode("testOpposite")}
-          className={`p-2 ${
+          className={`${
             mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
-          } rounded`}
+          }`}
         >
           Test Opposite
         </Button>
