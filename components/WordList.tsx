@@ -257,12 +257,14 @@ export default function WordList({
                 className="p-1 border rounded mr-2 w-1/4"
                 ref={(el) => (inputRefs.current[index] = el)}
               />
-              <Button
-                onClick={() => handleExposeAssociation(index)}
-                className="p-1 bg-yellow-500 text-white rounded mr-2"
-              >
-                Expose
-              </Button>
+              {word.association && (
+                <Button
+                  onClick={() => handleExposeAssociation(index)}
+                  className="p-1 bg-yellow-500 text-white rounded mr-2"
+                >
+                  Expose
+                </Button>
+              )}
               {testResults[index] !== undefined && (
                 <span
                   className={`${
@@ -272,7 +274,7 @@ export default function WordList({
                   {testResults[index] ? "Correct" : "Wrong"}
                 </span>
               )}
-              {exposedAssociations[index] && (
+              {exposedAssociations[index] && word.association && (
                 <span className="mr-2 w-1/3">{word.association}</span>
               )}
               <Button
