@@ -31,16 +31,6 @@ export default function WordList({
   const router = useRouter();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    setTestAnswers(words.map(() => ""));
-    setTestResults([]);
-    setExposedAssociations(words.map(() => false));
-    setEditingId(null);
-    setEditedWord(null);
-    setGrade(null);
-    inputRefs.current = inputRefs.current.slice(0, words.length);
-  }, [mode, words]);
-
   const handleDoubleClick = (word: Word) => {
     if (mode === "regular") {
       setEditingId(word.id);
@@ -90,6 +80,11 @@ export default function WordList({
     const newAnswers = [...testAnswers];
     newAnswers[index] = value;
     setTestAnswers(newAnswers);
+
+    // Clear exposed association when typing
+    const newExposedAssociations = [...exposedAssociations];
+    newExposedAssociations[index] = false;
+    setExposedAssociations(newExposedAssociations);
   };
 
   const handleKeyDown = (
@@ -154,6 +149,13 @@ export default function WordList({
 
     onUpdate();
     router.refresh();
+  };
+
+  const handleReset = () => {
+    setTestAnswers(words.map(() => ""));
+    setTestResults([]);
+    setGrade(null);
+    setExposedAssociations(words.map(() => false));
   };
 
   const handleExposeAssociation = (index: number) => {
@@ -323,6 +325,12 @@ export default function WordList({
             className="p-2 bg-blue-500 text-white rounded mr-4"
           >
             Submit
+          </Button>
+          <Button
+            onClick={handleReset}
+            className="p-2 bg-gray-500 text-white rounded mr-4"
+          >
+            Reset
           </Button>
           {grade !== null && (
             <span className="text-lg font-bold">Grade: {grade}%</span>
