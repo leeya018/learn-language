@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Word {
   word: string;
@@ -29,9 +29,19 @@ export default function WordList({
     words.map(() => false)
   );
 
+  useEffect(() => {
+    setTestAnswers(words.map(() => ""));
+    setTestResults([]);
+    setExposedAssociations(words.map(() => false));
+    setEditingIndex(null);
+    setEditedWord(null);
+  }, [mode, words]);
+
   const handleDoubleClick = (index: number, word: Word) => {
-    setEditingIndex(index);
-    setEditedWord(word);
+    if (mode === "regular") {
+      setEditingIndex(index);
+      setEditedWord(word);
+    }
   };
 
   const handleSave = async () => {
@@ -153,17 +163,17 @@ export default function WordList({
               >
                 Expose
               </button>
-              {exposedAssociations[index] && (
-                <span className="mr-2 w-1/3">{word.association}</span>
-              )}
               {testResults[index] !== undefined && (
                 <span
-                  className={
+                  className={`${
                     testResults[index] ? "text-green-500" : "text-red-500"
-                  }
+                  } mr-2`}
                 >
                   {testResults[index] ? "Correct" : "Wrong"}
                 </span>
+              )}
+              {exposedAssociations[index] && (
+                <span className="mr-2 w-1/3">{word.association}</span>
               )}
             </div>
           )}
