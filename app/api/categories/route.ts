@@ -54,3 +54,25 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const name = searchParams.get("name");
+
+  if (!name) {
+    return NextResponse.json(
+      { error: "Category name is required" },
+      { status: 400 }
+    );
+  }
+
+  const filePath = path.join(dataDir, `${name}.json`);
+
+  if (!fs.existsSync(filePath)) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  fs.unlinkSync(filePath);
+
+  return NextResponse.json({ success: true });
+}

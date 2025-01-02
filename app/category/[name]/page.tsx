@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
 import { Button } from "@/components/ui/Button";
+import DeleteCategoryModal from "../../../components/DeleteCategoryModal";
 import { Input } from "@/components/ui/Input";
 import { ArrowLeft } from "lucide-react";
 
@@ -12,13 +13,14 @@ export default function CategoryPage() {
   const router = useRouter();
   const { name } = useParams();
   const [words, setWords] = useState<
-    { word: string; translation: string; association: string }[]
+    { id: string; word: string; translation: string; association: string }[]
   >([]);
   const [mode, setMode] = useState<"regular" | "test" | "testOpposite">(
     "regular"
   );
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editedCategoryName, setEditedCategoryName] = useState(name as string);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetchWords();
@@ -59,6 +61,10 @@ export default function CategoryPage() {
     router.push("/");
   };
 
+  const handleDeleteCategory = () => {
+    setIsDeleteModalOpen(true);
+  };
+
   return (
     <div className="container mx-auto p-4">
       <Button onClick={handleGoBack} variant="outline" className="mb-4">
@@ -72,7 +78,12 @@ export default function CategoryPage() {
             onChange={(e) => setEditedCategoryName(e.target.value)}
             className="text-3xl font-bold mr-2"
           />
-          <Button onClick={handleCategoryNameUpdate}>Update</Button>
+          <Button onClick={handleCategoryNameUpdate} className="mr-2">
+            Update
+          </Button>
+          <Button onClick={handleDeleteCategory} variant="destructive">
+            Delete
+          </Button>
         </div>
       ) : (
         <h1
@@ -117,6 +128,15 @@ export default function CategoryPage() {
       {mode === "regular" && (
         <AddWord category={name as string} onAdd={fetchWords} />
       )}
+      <DeleteCategoryModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onDelete={() => {
+          // Implement delete logic here
+          router.push("/");
+        }}
+        categoryName={name as string}
+      />
     </div>
   );
 }
