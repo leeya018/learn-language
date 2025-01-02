@@ -89,6 +89,7 @@ export default function CategoryPage() {
       {isEditingCategory ? (
         <div className="flex items-center mb-4">
           <Input
+            // ref={null}
             type="text"
             value={editedCategoryName}
             onChange={(e) => setEditedCategoryName(e.target.value)}

@@ -101,11 +101,8 @@ export default function WordList({
       if (editingId) {
         handleSave();
       } else if (mode === "test" || mode === "testOpposite") {
-        if (index < words.length - 1) {
-          inputRefs.current[index + 1]?.focus();
-        } else {
-          handleSubmitTest();
-        }
+        const nextIndex = (index + 1) % words.length;
+        inputRefs.current[nextIndex]?.focus();
       }
     }
   };

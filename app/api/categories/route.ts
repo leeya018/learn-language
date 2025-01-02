@@ -12,7 +12,15 @@ export async function GET() {
   const categories = fs
     .readdirSync(categoriesDir)
     .filter((file) => file.endsWith(".json"))
-    .map((file) => file.replace(".json", ""));
+    .map((file) => {
+      const filePath = path.join(categoriesDir, file);
+      const stats = fs.statSync(filePath);
+      return {
+        name: file.replace(".json", ""),
+        createdAt: stats.birthtime,
+      };
+    })
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return NextResponse.json(categories);
 }

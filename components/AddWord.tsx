@@ -17,11 +17,11 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const [association, setAssociation] = useState("");
   const wordInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (wordInputRef.current) {
-      wordInputRef.current.focus();
-    }
-  }, [onAdd]);
+  // useEffect(() => {
+  //   if (wordInputRef.current) {
+  //     wordInputRef.current.focus()
+  //   }
+  // }, [onAdd])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         association,
       };
 
-      const response = await fetch(`/api/words?category=${category}`, {
+      await fetch(`/api/words?category=${category}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,11 +41,14 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         body: JSON.stringify(newWord),
       });
 
-      if (response.ok) {
-        setWord("");
-        setTranslation("");
-        setAssociation("");
-        onAdd();
+      setWord("");
+      setTranslation("");
+      setAssociation("");
+      onAdd();
+
+      // Focus on the word input after adding a new word
+      if (wordInputRef.current) {
+        wordInputRef.current.focus();
       }
     }
   };
