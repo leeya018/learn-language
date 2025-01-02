@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { Word } from "../types/word";
 
 interface AddWordProps {
   category: string;
@@ -15,23 +17,25 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (word.trim() && translation.trim()) {
-      // Update 1
+      const newWord: Word = {
+        id: uuidv4(),
+        word: word.trim(),
+        translation: translation.trim(),
+        association,
+      };
+
       const response = await fetch(`/api/words?category=${category}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          word: word.trim(),
-          translation: translation.trim(),
-          association,
-        }), // Update 2
+        body: JSON.stringify(newWord),
       });
 
       if (response.ok) {
-        setWord(""); // Update 3
-        setTranslation(""); // Update 3
-        setAssociation(""); // Update 3
+        setWord("");
+        setTranslation("");
+        setAssociation("");
         onAdd();
       }
     }

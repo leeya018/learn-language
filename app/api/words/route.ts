@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { Word } from "../../../types/word";
 
 const dataDir = path.join(process.cwd(), "data");
 
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   }
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
-  const words = JSON.parse(fileContent);
+  const words: Word[] = JSON.parse(fileContent);
 
   return NextResponse.json(words);
 }
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
-  const { word, translation, association } = await req.json();
+  const newWord: Word = await req.json();
 
   if (!category) {
     return NextResponse.json(
@@ -41,22 +42,14 @@ export async function POST(req: Request) {
 
   const filePath = path.join(dataDir, `${category}.json`);
 
-  let words = [];
+  let words: Word[] = [];
   if (fs.existsSync(filePath)) {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     words = JSON.parse(fileContent);
   }
 
-  words.push({ word, translation, association });
-  fs.writeFileSync(
-    filePath,
-    JSON.stringify(
-      words.map((w) => ({
-        ...w,
-        combined: `${w.word} - ${w.translation} - ${w.association}`,
-      }))
-    )
-  );
+  words.push(newWord);
+  fs.writeFileSync(filePath, JSON.stringify(words));
 
   return NextResponse.json({ success: true });
 }
@@ -64,7 +57,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
-  const { word, translation, association } = await req.json();
+  const updatedWord: Word = await req.json();
 
   if (!category) {
     return NextResponse.json(
@@ -80,20 +73,12 @@ export async function PUT(req: Request) {
   }
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
-  let words = JSON.parse(fileContent);
+  let words: Word[] = JSON.parse(fileContent);
 
-  const index = words.findIndex((w: { word: string }) => w.word === word);
+  const index = words.findIndex((w) => w.id === updatedWord.id);
   if (index !== -1) {
-    words[index] = { word, translation, association };
-    fs.writeFileSync(
-      filePath,
-      JSON.stringify(
-        words.map((w) => ({
-          ...w,
-          combined: `${w.word} - ${w.translation} - ${w.association}`,
-        }))
-      )
-    );
+    words[index] = updatedWord;
+    fs.writeFileSync(filePath, JSON.stringify(words));
     return NextResponse.json({ success: true });
   } else {
     return NextResponse.json({ error: "Word not found" }, { status: 404 });

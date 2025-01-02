@@ -3,12 +3,7 @@
 import { useState, useEffect } from "react";
 import { Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-
-interface Word {
-  word: string;
-  translation: string;
-  association: string;
-}
+import { Word } from "../types/word";
 
 interface WordListProps {
   words: Word[];
@@ -23,7 +18,7 @@ export default function WordList({
   category,
   onUpdate,
 }: WordListProps) {
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editedWord, setEditedWord] = useState<Word | null>(null);
   const [testAnswers, setTestAnswers] = useState<string[]>(words.map(() => ""));
   const [testResults, setTestResults] = useState<boolean[]>([]);
@@ -35,13 +30,13 @@ export default function WordList({
     setTestAnswers(words.map(() => ""));
     setTestResults([]);
     setExposedAssociations(words.map(() => false));
-    setEditingIndex(null);
+    setEditingId(null);
     setEditedWord(null);
   }, [mode, words]);
 
-  const handleDoubleClick = (index: number, word: Word) => {
+  const handleDoubleClick = (word: Word) => {
     if (mode === "regular") {
-      setEditingIndex(index);
+      setEditingId(word.id);
       setEditedWord(word);
     }
   };
@@ -52,10 +47,7 @@ export default function WordList({
         ...editedWord,
         word: editedWord.word.trim(),
         translation: editedWord.translation.trim(),
-        // We're not trimming the association as it might contain intentional spaces
       };
-
-      console.log({ trimmedWord });
 
       const response = await fetch(`/api/words?category=${category}`, {
         method: "PUT",
@@ -66,7 +58,7 @@ export default function WordList({
       });
 
       if (response.ok) {
-        setEditingIndex(null);
+        setEditingId(null);
         setEditedWord(null);
         onUpdate();
       }
@@ -124,13 +116,13 @@ export default function WordList({
   return (
     <div>
       {words.map((word, index) => (
-        <div key={index} className="mb-2">
+        <div key={word.id} className="mb-2">
           {mode === "regular" && (
             <div
-              onDoubleClick={() => handleDoubleClick(index, word)}
+              onDoubleClick={() => handleDoubleClick(word)}
               className="p-2 border rounded cursor-pointer flex items-center"
             >
-              {editingIndex === index ? (
+              {editingId === word.id ? (
                 <>
                   <input
                     type="text"
