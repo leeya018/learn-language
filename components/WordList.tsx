@@ -89,13 +89,26 @@ export default function WordList({
     setExposedAssociations(newExposedAssociations);
   };
 
-  const speakWord = (word: string) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "tl-PH"; // Tagalog language code
-      speechSynthesis.speak(utterance);
-    } else {
-      console.error("Text-to-speech not supported in this browser.");
+  const speakWord = async (word: string) => {
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: word }),
+      });
+
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } else {
+        console.error("Failed to get speech audio");
+      }
+    } catch (error) {
+      console.error("Error calling text-to-speech API:", error);
     }
   };
 
