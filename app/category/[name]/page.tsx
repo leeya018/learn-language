@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
-import { Button } from "@/components/ui/Button";
 import DeleteCategoryModal from "../../../components/DeleteCategoryModal";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shuffle } from "lucide-react";
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -65,11 +66,26 @@ export default function CategoryPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleScramble = () => {
+    const scrambledWords = [...words].sort(() => Math.random() - 0.5);
+    setWords(scrambledWords);
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <Button onClick={handleGoBack} variant="outline" className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
-      </Button>
+      <div className="flex justify-between items-center mb-4">
+        <Button onClick={handleGoBack} variant="outline">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+        </Button>
+        <Link href="/grades">
+          <Button
+            variant="default"
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            View Grades
+          </Button>
+        </Link>
+      </div>
       {isEditingCategory ? (
         <div className="flex items-center mb-4">
           <Input
@@ -93,30 +109,35 @@ export default function CategoryPage() {
           {name}
         </h1>
       )}
-      <div className="mb-4">
-        <Button
-          onClick={() => setMode("regular")}
-          className={`mr-2 ${
-            mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Regular
-        </Button>
-        <Button
-          onClick={() => setMode("test")}
-          className={`mr-2 ${
-            mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Test
-        </Button>
-        <Button
-          onClick={() => setMode("testOpposite")}
-          className={`${
-            mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Test Opposite
+      <div className="mb-4 flex justify-between items-center">
+        <div>
+          <Button
+            onClick={() => setMode("regular")}
+            className={`mr-2 ${
+              mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Regular
+          </Button>
+          <Button
+            onClick={() => setMode("test")}
+            className={`mr-2 ${
+              mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Test
+          </Button>
+          <Button
+            onClick={() => setMode("testOpposite")}
+            className={`${
+              mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Test Opposite
+          </Button>
+        </div>
+        <Button onClick={handleScramble} variant="outline">
+          <Shuffle className="mr-2 h-4 w-4" /> Scramble
         </Button>
       </div>
       <WordList

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -29,6 +29,7 @@ export default function WordList({
   );
   const [grade, setGrade] = useState<number | null>(null);
   const router = useRouter();
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     setTestAnswers(words.map(() => ""));
@@ -37,6 +38,7 @@ export default function WordList({
     setEditingId(null);
     setEditedWord(null);
     setGrade(null);
+    inputRefs.current = inputRefs.current.slice(0, words.length);
   }, [mode, words]);
 
   const handleDoubleClick = (word: Word) => {
@@ -74,6 +76,20 @@ export default function WordList({
     const newAnswers = [...testAnswers];
     newAnswers[index] = value;
     setTestAnswers(newAnswers);
+  };
+
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (index < words.length - 1) {
+        inputRefs.current[index + 1]?.focus();
+      } else {
+        handleSubmitTest();
+      }
+    }
   };
 
   const handleSubmitTest = async () => {
@@ -213,7 +229,9 @@ export default function WordList({
                 type="text"
                 value={testAnswers[index]}
                 onChange={(e) => handleTestInput(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
                 className="p-1 border rounded mr-2 w-1/4"
+                ref={(el) => (inputRefs.current[index] = el)}
               />
               <Button
                 onClick={() => handleExposeAssociation(index)}

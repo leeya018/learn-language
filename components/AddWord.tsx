@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Word } from "../types/word";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +15,13 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [association, setAssociation] = useState("");
+  const wordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (wordInputRef.current) {
+      wordInputRef.current.focus();
+    }
+  }, [onAdd]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +61,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         className="w-full sm:w-1/4"
         value={word}
         onChange={(e) => setWord(e.target.value)}
+        ref={wordInputRef}
       />
       <Input
         type="text"
