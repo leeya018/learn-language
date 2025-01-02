@@ -84,3 +84,31 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Word not found" }, { status: 404 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const category = searchParams.get("category");
+  const id = searchParams.get("id");
+
+  if (!category || !id) {
+    return NextResponse.json(
+      { error: "Category and word ID are required" },
+      { status: 400 }
+    );
+  }
+
+  const filePath = path.join(categoriesDir, `${category}.json`);
+
+  if (!fs.existsSync(filePath)) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  const fileContent = fs.readFileSync(filePath, "utf-8");
+  let words: Word[] = JSON.parse(fileContent);
+
+  const updatedWords = words.filter((word) => word.id !== id);
+
+  fs.writeFileSync(filePath, JSON.stringify(updatedWords));
+
+  return NextResponse.json({ success: true });
+}

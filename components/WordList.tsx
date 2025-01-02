@@ -72,6 +72,20 @@ export default function WordList({
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const response = await fetch(`/api/words?category=${category}&id=${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      onUpdate();
+      setEditingId(null);
+      setEditedWord(null);
+    } else {
+      alert("Failed to delete word");
+    }
+  };
+
   const handleTestInput = (index: number, value: string) => {
     const newAnswers = [...testAnswers];
     newAnswers[index] = value;
@@ -195,9 +209,15 @@ export default function WordList({
                   />
                   <Button
                     onClick={handleSave}
-                    className="p-1 bg-green-500 text-white rounded"
+                    className="p-1 bg-green-500 text-white rounded mr-2"
                   >
                     Save
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(word.id)}
+                    className="p-1 bg-red-500 text-white rounded"
+                  >
+                    Delete
                   </Button>
                 </>
               ) : (
