@@ -98,10 +98,14 @@ export default function WordList({
   ) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      if (index < words.length - 1) {
-        inputRefs.current[index + 1]?.focus();
-      } else {
-        handleSubmitTest();
+      if (editingId) {
+        handleSave();
+      } else if (mode === "test" || mode === "testOpposite") {
+        if (index < words.length - 1) {
+          inputRefs.current[index + 1]?.focus();
+        } else {
+          handleSubmitTest();
+        }
       }
     }
   };
@@ -183,6 +187,7 @@ export default function WordList({
                     onChange={(e) =>
                       setEditedWord({ ...editedWord!, word: e.target.value })
                     }
+                    onKeyDown={(e) => handleKeyDown(e, index)}
                     className="mr-2 p-1 border rounded w-1/4"
                   />
                   <Input
@@ -194,6 +199,7 @@ export default function WordList({
                         translation: e.target.value,
                       })
                     }
+                    onKeyDown={(e) => handleKeyDown(e, index)}
                     className="mr-2 p-1 border rounded w-1/4"
                   />
                   <Input
@@ -205,6 +211,7 @@ export default function WordList({
                         association: e.target.value,
                       })
                     }
+                    onKeyDown={(e) => handleKeyDown(e, index)}
                     className="mr-2 p-1 border rounded w-1/3"
                   />
                   <Button
