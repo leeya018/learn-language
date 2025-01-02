@@ -6,9 +6,18 @@ import Link from "next/link";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
 import DeleteCategoryModal from "../../../components/DeleteCategoryModal";
+import GPTSuggestions from "@/components/GPTSuggestions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft, Shuffle, Edit2, Check, X, ArrowUpDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Shuffle,
+  Edit2,
+  Check,
+  X,
+  ArrowUpDown,
+  Brain,
+} from "lucide-react";
 import { Word } from "../../../types/word";
 
 export default function CategoryPage() {
@@ -22,6 +31,7 @@ export default function CategoryPage() {
   const [editedCategoryName, setEditedCategoryName] = useState(name as string);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isOrderedByPoints, setIsOrderedByPoints] = useState(false);
+  const [showGPTSuggestions, setShowGPTSuggestions] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
   const wordListRef = useRef<{ handleReset: () => void } | null>(null);
 
@@ -83,10 +93,32 @@ export default function CategoryPage() {
   };
 
   const handleOrderByPoints = () => {
-    const sortedWords = [...words].sort((a, b) => a.points - b.points);
+    const sortedWords = [...words].sort((a, b) => b.points - a.points);
     setWords(sortedWords);
     setIsOrderedByPoints(!isOrderedByPoints);
     wordListRef.current?.handleReset();
+  };
+
+  const handleChooseWithGPT = () => {
+    setShowGPTSuggestions(true);
+  };
+
+  const handleCloseSuggestions = () => {
+    setShowGPTSuggestions(false);
+  };
+
+  const handleAddSelectedWords = async (selectedWords: Word[]) => {
+    for (const word of selectedWords) {
+      await fetch(`/api/words?category=${name}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(word),
+      });
+    }
+    fetchWords();
+    setShowGPTSuggestions(false);
   };
 
   return (
@@ -180,9 +212,14 @@ export default function CategoryPage() {
           <Button
             onClick={handleOrderByPoints}
             variant="outline"
-            className={isOrderedByPoints ? "bg-blue-500 text-white" : ""}
+            className={`mr-2 ${
+              isOrderedByPoints ? "bg-blue-500 text-white" : ""
+            }`}
           >
             <ArrowUpDown className="mr-2 h-4 w-4" /> Order by Points
+          </Button>
+          <Button onClick={handleChooseWithGPT} variant="outline">
+            <Brain className="mr-2 h-4 w-4" /> Choose with GPT
           </Button>
         </div>
       </div>
@@ -211,6 +248,13 @@ export default function CategoryPage() {
         }}
         categoryName={name as string}
       />
+      {showGPTSuggestions && (
+        <GPTSuggestions
+          category={name as string}
+          onClose={handleCloseSuggestions}
+          onAddWords={handleAddSelectedWords}
+        />
+      )}
     </div>
   );
 }
