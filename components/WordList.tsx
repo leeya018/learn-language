@@ -5,6 +5,7 @@ import { Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Word } from "../types/word";
+import { useRouter } from "next/navigation";
 
 interface WordListProps {
   words: Word[];
@@ -26,6 +27,8 @@ export default function WordList({
   const [exposedAssociations, setExposedAssociations] = useState<boolean[]>(
     words.map(() => false)
   );
+  const [grade, setGrade] = useState<number | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setTestAnswers(words.map(() => ""));
@@ -33,6 +36,7 @@ export default function WordList({
     setExposedAssociations(words.map(() => false));
     setEditingId(null);
     setEditedWord(null);
+    setGrade(null);
   }, [mode, words]);
 
   const handleDoubleClick = (word: Word) => {
@@ -72,7 +76,7 @@ export default function WordList({
     setTestAnswers(newAnswers);
   };
 
-  const handleSubmitTest = () => {
+  const handleSubmitTest = async () => {
     const results = words.map((word, index) => {
       const userAnswer = testAnswers[index].trim().toLowerCase();
       if (mode === "test") {
@@ -82,6 +86,25 @@ export default function WordList({
       }
     });
     setTestResults(results);
+
+    const correctAnswers = results.filter((result) => result).length;
+    const calculatedGrade = Math.round((correctAnswers / words.length) * 100);
+    setGrade(calculatedGrade);
+
+    // Save the grade
+    await fetch("/api/grades", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        category,
+        mode: mode === "test" ? "regularMode" : "testOppositeMode",
+        grade: calculatedGrade,
+      }),
+    });
+
+    router.refresh();
   };
 
   const handleExposeAssociation = (index: number) => {
@@ -227,12 +250,17 @@ export default function WordList({
         </div>
       ))}
       {(mode === "test" || mode === "testOpposite") && (
-        <Button
-          onClick={handleSubmitTest}
-          className="mt-4 p-2 bg-blue-500 text-white rounded"
-        >
-          Submit
-        </Button>
+        <div className="mt-4 flex items-center">
+          <Button
+            onClick={handleSubmitTest}
+            className="p-2 bg-blue-500 text-white rounded mr-4"
+          >
+            Submit
+          </Button>
+          {grade !== null && (
+            <span className="text-lg font-bold">Grade: {grade}%</span>
+          )}
+        </div>
       )}
     </div>
   );

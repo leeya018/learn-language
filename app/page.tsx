@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import AddCategory from "../components/AddCategory";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 export default function Home() {
   const [categories, setCategories] = useState<string[]>([]);
@@ -43,6 +44,16 @@ export default function Home() {
             {category}
           </Link>
         ))}
+      </div>
+      <div className="absolute top-4 right-4">
+        <Link href="/grades">
+          <Button
+            variant="default"
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            View Grades
+          </Button>
+        </Link>
       </div>
       <AddCategory onAdd={fetchCategories} />
     </div>

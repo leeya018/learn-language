@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const dataDir = path.join(process.cwd(), "data");
+const categoriesDir = path.join(process.cwd(), "data", "categories");
 
 export async function GET() {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+  if (!fs.existsSync(categoriesDir)) {
+    fs.mkdirSync(categoriesDir, { recursive: true });
   }
 
   const categories = fs
-    .readdirSync(dataDir)
+    .readdirSync(categoriesDir)
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(".json", ""));
 
@@ -20,11 +20,11 @@ export async function GET() {
 export async function POST(req: Request) {
   const { category } = await req.json();
 
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+  if (!fs.existsSync(categoriesDir)) {
+    fs.mkdirSync(categoriesDir, { recursive: true });
   }
 
-  const filePath = path.join(dataDir, `${category}.json`);
+  const filePath = path.join(categoriesDir, `${category}.json`);
 
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify([]));
@@ -36,8 +36,8 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { oldName, newName } = await req.json();
 
-  const oldPath = path.join(dataDir, `${oldName}.json`);
-  const newPath = path.join(dataDir, `${newName}.json`);
+  const oldPath = path.join(categoriesDir, `${oldName}.json`);
+  const newPath = path.join(categoriesDir, `${newName}.json`);
 
   if (!fs.existsSync(oldPath)) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
@@ -66,7 +66,7 @@ export async function DELETE(req: Request) {
     );
   }
 
-  const filePath = path.join(dataDir, `${name}.json`);
+  const filePath = path.join(categoriesDir, `${name}.json`);
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });

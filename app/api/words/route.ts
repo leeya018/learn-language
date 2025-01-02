@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { Word } from "../../../types/word";
 
-const dataDir = path.join(process.cwd(), "data");
+const categoriesDir = path.join(process.cwd(), "data", "categories");
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const filePath = path.join(dataDir, `${category}.json`);
+  const filePath = path.join(categoriesDir, `${category}.json`);
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json([]);
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const filePath = path.join(dataDir, `${category}.json`);
+  const filePath = path.join(categoriesDir, `${category}.json`);
 
   let words: Word[] = [];
   if (fs.existsSync(filePath)) {
@@ -66,7 +66,7 @@ export async function PUT(req: Request) {
     );
   }
 
-  const filePath = path.join(dataDir, `${category}.json`);
+  const filePath = path.join(categoriesDir, `${category}.json`);
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
