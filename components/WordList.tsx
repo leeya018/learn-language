@@ -122,6 +122,23 @@ export default function WordList({
     const calculatedGrade = Math.round((correctAnswers / words.length) * 100);
     setGrade(calculatedGrade);
 
+    // Update points for correct answers
+    const updatedWords = words.map((word, index) => {
+      if (results[index]) {
+        return { ...word, points: word.points + 1 };
+      }
+      return word;
+    });
+
+    // Save updated words with new points
+    await fetch(`/api/words?category=${category}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedWords),
+    });
+
     // Save the grade
     await fetch("/api/grades", {
       method: "POST",
@@ -135,6 +152,7 @@ export default function WordList({
       }),
     });
 
+    onUpdate();
     router.refresh();
   };
 
@@ -185,7 +203,7 @@ export default function WordList({
                       setEditedWord({ ...editedWord!, word: e.target.value })
                     }
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    className="mr-2 p-1 border rounded w-1/4"
+                    className="mr-2 p-1 border rounded w-1/5"
                   />
                   <Input
                     type="text"
@@ -197,7 +215,7 @@ export default function WordList({
                       })
                     }
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    className="mr-2 p-1 border rounded w-1/4"
+                    className="mr-2 p-1 border rounded w-1/5"
                   />
                   <Input
                     type="text"
@@ -209,8 +227,11 @@ export default function WordList({
                       })
                     }
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    className="mr-2 p-1 border rounded w-1/3"
+                    className="mr-2 p-1 border rounded w-1/4"
                   />
+                  <span className="mr-2 w-1/10">
+                    Points: {editedWord?.points}
+                  </span>
                   <Button
                     onClick={handleSave}
                     className="p-1 bg-green-500 text-white rounded mr-2"
@@ -226,11 +247,12 @@ export default function WordList({
                 </>
               ) : (
                 <>
-                  <span className="mr-2 w-1/4 inline-block">{word.word}</span>
-                  <span className="mr-2 w-1/4 inline-block">
+                  <span className="mr-2 w-1/5 inline-block">{word.word}</span>
+                  <span className="mr-2 w-1/5 inline-block">
                     {word.translation}
                   </span>
-                  <span className="w-1/3 inline-block">{word.association}</span>
+                  <span className="w-1/4 inline-block">{word.association}</span>
+                  <span className="mr-2 w-1/10">Points: {word.points}</span>
                   <Button
                     onClick={() => speakWord(word.word)}
                     className="ml-2"
@@ -246,7 +268,7 @@ export default function WordList({
           )}
           {(mode === "test" || mode === "testOpposite") && (
             <div className="flex items-center">
-              <span className="mr-2 w-1/4">
+              <span className="mr-2 w-1/5">
                 {mode === "test" ? word.word : word.translation}
               </span>
               <Input
@@ -254,7 +276,7 @@ export default function WordList({
                 value={testAnswers[index]}
                 onChange={(e) => handleTestInput(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className="p-1 border rounded mr-2 w-1/4"
+                className="p-1 border rounded mr-2 w-1/5"
                 ref={(el) => (inputRefs.current[index] = el)}
               />
               {word.association && (
@@ -275,8 +297,9 @@ export default function WordList({
                 </span>
               )}
               {exposedAssociations[index] && word.association && (
-                <span className="mr-2 w-1/3">{word.association}</span>
+                <span className="mr-2 w-1/4">{word.association}</span>
               )}
+              <span className="mr-2 w-1/10">Points: {word.points}</span>
               <Button
                 onClick={() =>
                   speakWord(mode === "test" ? word.word : word.translation)

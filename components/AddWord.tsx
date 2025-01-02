@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Word } from "../types/word";
 import { Button } from "@/components/ui/Button";
@@ -17,12 +17,6 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const [association, setAssociation] = useState("");
   const wordInputRef = useRef<HTMLInputElement>(null);
 
-  // useEffect(() => {
-  //   if (wordInputRef.current) {
-  //     wordInputRef.current.focus()
-  //   }
-  // }, [onAdd])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (word.trim() && translation.trim()) {
@@ -31,6 +25,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         word: word.trim().toLowerCase(),
         translation: translation.trim().toLowerCase(),
         association,
+        points: 0,
       };
 
       await fetch(`/api/words?category=${category}`, {
@@ -46,7 +41,6 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
       setAssociation("");
       onAdd();
 
-      // Focus on the word input after adding a new word
       if (wordInputRef.current) {
         wordInputRef.current.focus();
       }
