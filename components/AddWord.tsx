@@ -14,21 +14,26 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!word.trim() || !translation.trim()) return;
+    if (word.trim() && translation.trim()) {
+      // Update 1
+      const response = await fetch(`/api/words?category=${category}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          word: word.trim(),
+          translation: translation.trim(),
+          association,
+        }), // Update 2
+      });
 
-    const response = await fetch(`/api/words?category=${category}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ word, translation, association }),
-    });
-
-    if (response.ok) {
-      setWord("");
-      setTranslation("");
-      setAssociation("");
-      onAdd();
+      if (response.ok) {
+        setWord(""); // Update 3
+        setTranslation(""); // Update 3
+        setAssociation(""); // Update 3
+        onAdd();
+      }
     }
   };
 

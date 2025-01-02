@@ -48,12 +48,21 @@ export default function WordList({
 
   const handleSave = async () => {
     if (editedWord) {
+      const trimmedWord = {
+        ...editedWord,
+        word: editedWord.word.trim(),
+        translation: editedWord.translation.trim(),
+        // We're not trimming the association as it might contain intentional spaces
+      };
+
+      console.log({ trimmedWord });
+
       const response = await fetch(`/api/words?category=${category}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editedWord),
+        body: JSON.stringify(trimmedWord),
       });
 
       if (response.ok) {
