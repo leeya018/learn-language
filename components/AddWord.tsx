@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Word } from "../types/word";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 interface AddWordProps {
   category: string;
@@ -19,8 +21,8 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
     if (word.trim() && translation.trim()) {
       const newWord: Word = {
         id: uuidv4(),
-        word: word.trim(),
-        translation: translation.trim(),
+        word: word.trim().toLowerCase(),
+        translation: translation.trim().toLowerCase(),
         association,
       };
 
@@ -42,31 +44,34 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <input
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
+    >
+      <Input
         type="text"
         placeholder="Word"
-        className="p-2 border rounded mr-2 w-1/4"
+        className="w-full sm:w-1/4"
         value={word}
         onChange={(e) => setWord(e.target.value)}
       />
-      <input
+      <Input
         type="text"
         placeholder="Translation"
-        className="p-2 border rounded mr-2 w-1/4"
+        className="w-full sm:w-1/4"
         value={translation}
         onChange={(e) => setTranslation(e.target.value)}
       />
-      <input
+      <Input
         type="text"
         placeholder="Association"
-        className="p-2 border rounded mr-2 w-1/3"
+        className="w-full sm:w-1/3"
         value={association}
         onChange={(e) => setAssociation(e.target.value)}
       />
-      <button type="submit" className="p-2 bg-blue-500 text-white rounded">
+      <Button type="submit" className="w-full sm:w-auto">
         Add Word
-      </button>
+      </Button>
     </form>
   );
 }

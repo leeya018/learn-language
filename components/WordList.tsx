@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Word } from "../types/word";
 
 interface WordListProps {
@@ -45,8 +46,8 @@ export default function WordList({
     if (editedWord) {
       const trimmedWord = {
         ...editedWord,
-        word: editedWord.word.trim(),
-        translation: editedWord.translation.trim(),
+        word: editedWord.word.trim().toLowerCase(),
+        translation: editedWord.translation.trim().toLowerCase(),
       };
 
       const response = await fetch(`/api/words?category=${category}`, {
@@ -73,12 +74,11 @@ export default function WordList({
 
   const handleSubmitTest = () => {
     const results = words.map((word, index) => {
+      const userAnswer = testAnswers[index].trim().toLowerCase();
       if (mode === "test") {
-        return (
-          testAnswers[index].toLowerCase() === word.translation.toLowerCase()
-        );
+        return userAnswer === word.translation.toLowerCase();
       } else {
-        return testAnswers[index].toLowerCase() === word.word.toLowerCase();
+        return userAnswer === word.word.toLowerCase();
       }
     });
     setTestResults(results);
@@ -124,7 +124,7 @@ export default function WordList({
             >
               {editingId === word.id ? (
                 <>
-                  <input
+                  <Input
                     type="text"
                     value={editedWord?.word || ""}
                     onChange={(e) =>
@@ -132,7 +132,7 @@ export default function WordList({
                     }
                     className="mr-2 p-1 border rounded w-1/4"
                   />
-                  <input
+                  <Input
                     type="text"
                     value={editedWord?.translation || ""}
                     onChange={(e) =>
@@ -143,7 +143,7 @@ export default function WordList({
                     }
                     className="mr-2 p-1 border rounded w-1/4"
                   />
-                  <input
+                  <Input
                     type="text"
                     value={editedWord?.association || ""}
                     onChange={(e) =>
@@ -154,12 +154,12 @@ export default function WordList({
                     }
                     className="mr-2 p-1 border rounded w-1/3"
                   />
-                  <button
+                  <Button
                     onClick={handleSave}
                     className="p-1 bg-green-500 text-white rounded"
                   >
                     Save
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
@@ -186,18 +186,18 @@ export default function WordList({
               <span className="mr-2 w-1/4">
                 {mode === "test" ? word.word : word.translation}
               </span>
-              <input
+              <Input
                 type="text"
                 value={testAnswers[index]}
                 onChange={(e) => handleTestInput(index, e.target.value)}
                 className="p-1 border rounded mr-2 w-1/4"
               />
-              <button
+              <Button
                 onClick={() => handleExposeAssociation(index)}
                 className="p-1 bg-yellow-500 text-white rounded mr-2"
               >
                 Expose
-              </button>
+              </Button>
               {testResults[index] !== undefined && (
                 <span
                   className={`${
@@ -227,12 +227,12 @@ export default function WordList({
         </div>
       ))}
       {(mode === "test" || mode === "testOpposite") && (
-        <button
+        <Button
           onClick={handleSubmitTest}
           className="mt-4 p-2 bg-blue-500 text-white rounded"
         >
           Submit
-        </button>
+        </Button>
       )}
     </div>
   );
