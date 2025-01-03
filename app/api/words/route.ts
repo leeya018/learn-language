@@ -47,7 +47,19 @@ export async function POST(req: Request) {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     words = JSON.parse(fileContent);
   }
-  console.log({ words });
+
+  // Check if the word already exists
+  const wordExists = words.some(
+    (w) => w.word.toLowerCase() === newWord.word.toLowerCase()
+  );
+
+  if (wordExists) {
+    return NextResponse.json(
+      { error: "Word already exists in this category" },
+      { status: 409 }
+    );
+  }
+
   words.push(newWord);
   fs.writeFileSync(filePath, JSON.stringify(words));
 
