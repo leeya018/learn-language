@@ -120,8 +120,13 @@ const WordList = forwardRef<WordListRef, WordListProps>(
     };
 
     const handleSubmitTest = async () => {
+      const completedAnswers = testAnswers.map((answer) =>
+        answer.trim() === "" ? "none" : answer
+      );
+      setTestAnswers(completedAnswers);
+
       const results = words.map((word, index) => {
-        const userAnswer = testAnswers[index].trim().toLowerCase();
+        const userAnswer = completedAnswers[index].toLowerCase();
         if (mode === "test") {
           return userAnswer === word.translation.toLowerCase();
         } else {
