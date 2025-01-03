@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     words = JSON.parse(fileContent);
   }
-
+  console.log({ words });
   words.push(newWord);
   fs.writeFileSync(filePath, JSON.stringify(words));
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
-  const updatedWords: Word[] = await req.json();
+  const updatedWord: Word = await req.json();
 
   if (!category) {
     return NextResponse.json(
@@ -72,8 +72,17 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  fs.writeFileSync(filePath, JSON.stringify(updatedWords));
-  return NextResponse.json({ success: true });
+  const fileContent = fs.readFileSync(filePath, "utf-8");
+  let words: Word[] = JSON.parse(fileContent);
+
+  const index = words.findIndex((w) => w.id === updatedWord.id);
+  if (index !== -1) {
+    words[index] = updatedWord;
+    fs.writeFileSync(filePath, JSON.stringify(words));
+    return NextResponse.json({ success: true });
+  } else {
+    return NextResponse.json({ error: "Word not found" }, { status: 404 });
+  }
 }
 
 export async function DELETE(req: Request) {
