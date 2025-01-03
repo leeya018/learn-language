@@ -93,7 +93,7 @@ export default function CategoryPage() {
   };
 
   const handleOrderByPoints = () => {
-    const sortedWords = [...words].sort((a, b) => b.points - a.points);
+    const sortedWords = [...words].sort((a, b) => a.points - b.points);
     setWords(sortedWords);
     setIsOrderedByPoints(!isOrderedByPoints);
     wordListRef.current?.handleReset();
