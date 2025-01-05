@@ -49,7 +49,8 @@ export async function GET(req: Request) {
           content: `Suggest 10 popular words in English and their
            translations in Tagalog for the category: ${category}. 
            Format as JSON array of objects with 
-           'word' (tagalog language) and 'translation' (english language),'association' (set to empty string)
+           'word' (tagalog language) and 'translation' (english language),
+           'association' (set to empty string),  'category' which set to :  ${category}.
             'points' (set to 0), properties
            . Do not include these existing words: ${existingWordsList}`,
         },

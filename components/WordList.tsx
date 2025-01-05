@@ -128,17 +128,19 @@ const WordList = forwardRef<WordListRef, WordListProps>(
     };
 
     const handleSubmitTest = async () => {
-      const completedAnswers = testAnswers.map((answer) =>
-        answer.trim() === "" ? "none" : answer
+      const completedAnswers = testAnswers.map(
+        (answer) => answer?.trim()?.toLowerCase() || ""
       );
       setTestAnswers(completedAnswers);
 
       const results = words.map((word, index) => {
-        const userAnswer = completedAnswers[index].toLowerCase();
+        const userAnswer = completedAnswers[index];
         if (mode === "test") {
-          return userAnswer === word.translation.toLowerCase();
+          return (
+            userAnswer !== "" && userAnswer === word.translation.toLowerCase()
+          );
         } else {
-          return userAnswer === word.word.toLowerCase();
+          return userAnswer !== "" && userAnswer === word.word.toLowerCase();
         }
       });
       setTestResults(results);
