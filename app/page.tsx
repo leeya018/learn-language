@@ -80,6 +80,11 @@ export default function Home() {
                 <span className="text-xs">Test Locked</span>
               </div>
             )}
+            {category.level >= 4 && (
+              <div className="absolute bottom-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                Done
+              </div>
+            )}
           </Link>
         ))}
       </div>
