@@ -131,7 +131,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
 
     const handleSubmitTest = async () => {
       const completedAnswers = testAnswers.map(
-        (answer) => answer?.trim()?.toLowerCase() || ""
+        (answer) => answer?.trim() ?? ""
       );
       setTestAnswers(completedAnswers);
 
@@ -139,10 +139,14 @@ const WordList = forwardRef<WordListRef, WordListProps>(
         const userAnswer = completedAnswers[index];
         if (mode === "test") {
           return (
-            userAnswer !== "" && userAnswer === word.translation.toLowerCase()
+            userAnswer !== "" &&
+            userAnswer?.toLowerCase() === word.translation?.toLowerCase()
           );
         } else {
-          return userAnswer !== "" && userAnswer === word.word.toLowerCase();
+          return (
+            userAnswer !== "" &&
+            userAnswer.toLowerCase() === word.word.toLowerCase()
+          );
         }
       });
       setTestResults(results);
@@ -314,7 +318,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   className={`p-1 border rounded mr-2 w-1/5 ${
                     testResults[index] !== undefined &&
-                    testAnswers[index].trim() === ""
+                    testAnswers[index]?.trim() === ""
                       ? "bg-red-100"
                       : ""
                   }`}
