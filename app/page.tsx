@@ -5,12 +5,8 @@ import Link from "next/link";
 import AddCategory from "../components/AddCategory";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-
-interface Category {
-  name: string;
-  createdAt: string;
-  isNew?: boolean;
-}
+import { Category } from "@/types/category";
+import { Lock } from "lucide-react";
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -26,34 +22,28 @@ export default function Home() {
     setCategories(data.map((category) => ({ ...category, isNew: false })));
   };
 
-  const handleAddCategory = async (newCategoryName: string) => {
-    await fetch("/api/categories", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ category: newCategoryName }),
-    });
-
-    const updatedCategories = [
-      {
-        name: newCategoryName,
-        createdAt: new Date().toISOString(),
-        isNew: true,
-      },
-      ...categories,
-    ];
-    setCategories(updatedCategories);
+  const handleAddCategory = (newCategory: Category) => {
+    setCategories((prevCategories) => [
+      { ...newCategory, isNew: true },
+      ...prevCategories,
+    ]);
 
     setTimeout(() => {
       setCategories((prevCategories) =>
         prevCategories.map((category) =>
-          category.name === newCategoryName
+          category.name === newCategory.name
             ? { ...category, isNew: false }
             : category
         )
       );
     }, 1000);
+  };
+
+  const isTestLocked = (lastExam: string | null) => {
+    if (!lastExam) return false;
+    const lastExamDate = new Date(lastExam);
+    const today = new Date();
+    return lastExamDate.toDateString() === today.toDateString();
   };
 
   const filteredCategories = categories.filter((category) =>
@@ -77,9 +67,19 @@ export default function Home() {
             key={category.name}
             className={`p-4 border rounded hover:bg-gray-100 transition-colors duration-300 ${
               category.isNew ? "bg-green-500 text-white" : ""
-            }`}
+            } relative`}
           >
-            {category.name}
+            <div className="font-bold">{category.name}</div>
+            <div className="text-sm text-gray-500">
+              Created: {new Date(category.date).toLocaleDateString()}
+            </div>
+            <div className="text-sm text-gray-500">Level: {category.level}</div>
+            {isTestLocked(category.lastExam) && (
+              <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full flex items-center">
+                <Lock className="w-4 h-4 mr-1" />
+                <span className="text-xs">Test Locked</span>
+              </div>
+            )}
           </Link>
         ))}
       </div>

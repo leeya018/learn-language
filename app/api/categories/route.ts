@@ -1,26 +1,42 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { Category } from "@/types/category";
 
-const categoriesDir = path.join(process.cwd(), "data", "categories");
+const dataDir = path.join(process.cwd(), "data");
+const categoriesFilePath = path.join(dataDir, "categories.json");
 
-export async function GET() {
-  if (!fs.existsSync(categoriesDir)) {
-    fs.mkdirSync(categoriesDir, { recursive: true });
+function readCategories(): Category[] {
+  if (!fs.existsSync(categoriesFilePath)) {
+    return [];
   }
+  const data = fs.readFileSync(categoriesFilePath, "utf-8");
+  return JSON.parse(data);
+}
 
-  const categories = fs
-    .readdirSync(categoriesDir)
-    .filter((file) => file.endsWith(".json"))
-    .map((file) => {
-      const filePath = path.join(categoriesDir, file);
-      const stats = fs.statSync(filePath);
-      return {
-        name: file.replace(".json", ""),
-        createdAt: stats.birthtime,
-      };
-    })
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+function writeCategories(categories: Category[]) {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  fs.writeFileSync(categoriesFilePath, JSON.stringify(categories, null, 2));
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const name = searchParams.get("name");
+
+  const categories = readCategories();
+
+  if (name) {
+    const category = categories.find((c) => c.name === name);
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(category);
+  }
 
   return NextResponse.json(categories);
 }
@@ -28,39 +44,72 @@ export async function GET() {
 export async function POST(req: Request) {
   const { category } = await req.json();
 
-  if (!fs.existsSync(categoriesDir)) {
-    fs.mkdirSync(categoriesDir, { recursive: true });
-  }
+  const categories = readCategories();
 
-  const filePath = path.join(categoriesDir, `${category}.json`);
-
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify([]));
-  }
-
-  return NextResponse.json({ success: true });
-}
-
-export async function PUT(req: Request) {
-  const { oldName, newName } = await req.json();
-
-  const oldPath = path.join(categoriesDir, `${oldName}.json`);
-  const newPath = path.join(categoriesDir, `${newName}.json`);
-
-  if (!fs.existsSync(oldPath)) {
-    return NextResponse.json({ error: "Category not found" }, { status: 404 });
-  }
-
-  if (fs.existsSync(newPath)) {
+  // Check if the category already exists
+  if (categories.some((c) => c.name.toLowerCase() === category.toLowerCase())) {
     return NextResponse.json(
-      { error: "New category name already exists" },
+      { error: "Category already exists" },
       { status: 400 }
     );
   }
 
-  fs.renameSync(oldPath, newPath);
+  const newCategory: Category = {
+    name: category,
+    date: new Date().toISOString(),
+    level: 0,
+    lastExam: null,
+  };
 
-  return NextResponse.json({ success: true });
+  categories.push(newCategory);
+  writeCategories(categories);
+
+  return NextResponse.json({ success: true, category: newCategory });
+}
+
+export async function PUT(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const name = searchParams.get("name");
+  const { increaseLevel, lastExam, newName } = await req.json();
+
+  if (!name) {
+    return NextResponse.json(
+      { error: "Category name is required" },
+      { status: 400 }
+    );
+  }
+
+  const categories = readCategories();
+  const categoryIndex = categories.findIndex((c) => c.name === name);
+
+  if (categoryIndex === -1) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  if (increaseLevel) {
+    categories[categoryIndex].level += 1;
+  }
+
+  if (lastExam) {
+    categories[categoryIndex].lastExam = lastExam;
+  }
+
+  if (newName) {
+    if (categories.some((c) => c.name === newName)) {
+      return NextResponse.json(
+        { error: "New category name already exists" },
+        { status: 400 }
+      );
+    }
+    categories[categoryIndex].name = newName;
+  }
+
+  writeCategories(categories);
+
+  return NextResponse.json({
+    success: true,
+    category: categories[categoryIndex],
+  });
 }
 
 export async function DELETE(req: Request) {
@@ -74,13 +123,14 @@ export async function DELETE(req: Request) {
     );
   }
 
-  const filePath = path.join(categoriesDir, `${name}.json`);
+  const categories = readCategories();
+  const updatedCategories = categories.filter((c) => c.name !== name);
 
-  if (!fs.existsSync(filePath)) {
+  if (categories.length === updatedCategories.length) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  fs.unlinkSync(filePath);
+  writeCategories(updatedCategories);
 
   return NextResponse.json({ success: true });
 }

@@ -18,6 +18,8 @@ interface WordListProps {
   mode: "regular" | "test" | "testOpposite";
   category: string;
   onUpdate: () => void;
+  isTestModeDisabled: boolean;
+  setMode: (mode: "regular" | "test" | "testOpposite") => void;
 }
 
 export type WordListRef = {
@@ -25,7 +27,7 @@ export type WordListRef = {
 };
 
 const WordList = forwardRef<WordListRef, WordListProps>(
-  ({ words, mode, category, onUpdate }, ref) => {
+  ({ words, mode, category, onUpdate, setMode, isTestModeDisabled }, ref) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editedWord, setEditedWord] = useState<Word | null>(null);
     const [testAnswers, setTestAnswers] = useState<string[]>(
@@ -36,6 +38,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       words.map(() => false)
     );
     const [grade, setGrade] = useState<number | null>(null);
+    const [testCompleted, setTestCompleted] = useState(false);
     const router = useRouter();
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -68,7 +71,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       );
 
       if (response.ok) {
-        onUpdate(); // Refresh the word list
+        onUpdate();
       } else {
         console.error("Failed to update word");
       }
@@ -106,7 +109,6 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       newAnswers[index] = value;
       setTestAnswers(newAnswers);
 
-      // Clear exposed association when typing
       const newExposedAssociations = [...exposedAssociations];
       newExposedAssociations[index] = false;
       setExposedAssociations(newExposedAssociations);
@@ -149,14 +151,15 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       const calculatedGrade = Math.round((correctAnswers / words.length) * 100);
       setGrade(calculatedGrade);
 
-      // Update points for correct answers
+      const allCorrect = results.every((result) => result);
+      setTestCompleted(allCorrect);
+
       for (let i = 0; i < words.length; i++) {
         if (results[i]) {
           await updateWord(words[i].id, { points: words[i].points + 1 });
         }
       }
 
-      // Save the grade
       await fetch("/api/grades", {
         method: "POST",
         headers: {
@@ -168,6 +171,20 @@ const WordList = forwardRef<WordListRef, WordListProps>(
           grade: calculatedGrade,
         }),
       });
+
+      if (allCorrect) {
+        await fetch(`/api/categories?name=${category}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            increaseLevel: true,
+            lastExam: new Date().toISOString(),
+          }),
+        });
+        setMode("regular");
+      }
 
       onUpdate();
       router.refresh();
@@ -295,13 +312,21 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                   value={testAnswers[index]}
                   onChange={(e) => handleTestInput(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="p-1 border rounded mr-2 w-1/5"
+                  className={`p-1 border rounded mr-2 w-1/5 ${
+                    testResults[index] !== undefined &&
+                    testAnswers[index].trim() === ""
+                      ? "bg-red-100"
+                      : ""
+                  }`}
+                  readOnly={testResults.length > 0 || testCompleted}
+                  disabled={testCompleted || isTestModeDisabled}
                   ref={(el) => (inputRefs.current[index] = el)}
                 />
                 {word.association && (
                   <Button
                     onClick={() => handleExposeAssociation(index)}
                     className="p-1 bg-yellow-500 text-white rounded mr-2"
+                    disabled={testCompleted || isTestModeDisabled}
                   >
                     Expose
                   </Button>
@@ -328,6 +353,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                   aria-label={`Pronounce ${
                     mode === "test" ? word.word : word.translation
                   } in Tagalog`}
+                  disabled={testCompleted || isTestModeDisabled}
                 >
                   <Volume2 className="h-4 w-4" />
                 </Button>
@@ -340,6 +366,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
             <Button
               onClick={handleSubmitTest}
               className="p-2 bg-blue-500 text-white rounded mr-4"
+              disabled={testCompleted || isTestModeDisabled}
             >
               Submit
             </Button>
@@ -349,8 +376,10 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 setTestResults([]);
                 setGrade(null);
                 setExposedAssociations(words.map(() => false));
+                setTestCompleted(false);
               }}
               className="p-2 bg-gray-500 text-white rounded mr-4"
+              disabled={testCompleted || isTestModeDisabled}
             >
               Reset
             </Button>

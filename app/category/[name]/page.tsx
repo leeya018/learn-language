@@ -6,7 +6,7 @@ import Link from "next/link";
 import WordList from "../../../components/WordList";
 import AddWord from "../../../components/AddWord";
 import DeleteCategoryModal from "../../../components/DeleteCategoryModal";
-import GPTSuggestions from "@/components/GPTSuggestions";
+import GPTSuggestions from "../../../components/GPTSuggestions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -17,8 +17,10 @@ import {
   X,
   ArrowUpDown,
   Brain,
+  Lock,
 } from "lucide-react";
 import { Word } from "../../../types/word";
+import { Alert, AlertDescription } from "@/components/ui/Alert";
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -32,11 +34,14 @@ export default function CategoryPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isOrderedByPoints, setIsOrderedByPoints] = useState(false);
   const [showGPTSuggestions, setShowGPTSuggestions] = useState(false);
+  const [lastExamDate, setLastExamDate] = useState<string | null>(null);
+  const [isTestLocked, setIsTestLocked] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
   const wordListRef = useRef<{ handleReset: () => void } | null>(null);
 
   useEffect(() => {
     fetchWords();
+    fetchCategoryDetails();
   }, [name]);
 
   useEffect(() => {
@@ -49,6 +54,27 @@ export default function CategoryPage() {
     const response = await fetch(`/api/words?category=${name}`);
     const data = await response.json();
     setWords(data);
+  };
+
+  const fetchCategoryDetails = async () => {
+    const response = await fetch(`/api/categories?name=${name}`);
+    if (response.ok) {
+      const categoryData = await response.json();
+      setLastExamDate(categoryData.lastExam);
+      checkTestLocked(categoryData.lastExam);
+    } else {
+      console.error("Failed to fetch category details");
+    }
+  };
+
+  const checkTestLocked = (lastExam: string | null) => {
+    if (!lastExam) {
+      setIsTestLocked(false);
+      return;
+    }
+    const lastExamDate = new Date(lastExam);
+    const today = new Date();
+    setIsTestLocked(lastExamDate.toDateString() === today.toDateString());
   };
 
   const handleCategoryNameUpdate = async () => {
@@ -193,6 +219,7 @@ export default function CategoryPage() {
             className={`mr-2 ${
               mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
+            disabled={isTestLocked}
           >
             Test
           </Button>
@@ -201,6 +228,7 @@ export default function CategoryPage() {
             className={`${
               mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
+            disabled={isTestLocked}
           >
             Test Opposite
           </Button>
@@ -223,12 +251,23 @@ export default function CategoryPage() {
           </Button>
         </div>
       </div>
+      {isTestLocked && (
+        <Alert variant="destructive" className="mb-4">
+          <Lock className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            Test mode is locked until tomorrow. You've completed the test
+            successfully today.
+          </AlertDescription>
+        </Alert>
+      )}
       <WordList
         words={words}
         mode={mode}
         category={name as string}
         onUpdate={fetchWords}
         ref={wordListRef}
+        isTestModeDisabled={isTestLocked}
+        setMode={setMode}
       />
       {mode === "regular" && (
         <AddWord category={name as string} onAdd={fetchWords} />
@@ -251,7 +290,7 @@ export default function CategoryPage() {
       {showGPTSuggestions && (
         <GPTSuggestions
           category={name as string}
-          onClose={handleCloseSuggestions}
+          onClose={() => setShowGPTSuggestions(false)}
           onAddWords={handleAddSelectedWords}
         />
       )}
