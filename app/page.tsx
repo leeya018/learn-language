@@ -6,11 +6,13 @@ import AddCategory from "../components/AddCategory";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Category } from "@/types/category";
-import { Lock } from "lucide-react";
+import { Lock, Check, X } from "lucide-react";
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState("");
+  const [showDone, setShowDone] = useState(true);
+  const [showLocked, setShowLocked] = useState(true);
 
   useEffect(() => {
     fetchCategories();
@@ -46,20 +48,54 @@ export default function Home() {
     return lastExamDate.toDateString() === today.toDateString();
   };
 
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(filter.toLowerCase())
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(filter.toLowerCase()) &&
+      (showDone || category.level < 4) &&
+      (showLocked || !isTestLocked(category.lastExam))
   );
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Language Learning App</h1>
-      <Input
-        type="text"
-        placeholder="Filter categories..."
-        className="w-full mb-4"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-      />
+      <div className="mb-6">
+        <AddCategory onAdd={handleAddCategory} />
+      </div>
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <Input
+          type="text"
+          placeholder="Filter categories..."
+          className="w-full md:w-1/3"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowDone(!showDone)}
+            variant={showDone ? "default" : "outline"}
+            className="flex items-center"
+          >
+            {showDone ? (
+              <Check className="w-4 h-4 mr-2" />
+            ) : (
+              <X className="w-4 h-4 mr-2" />
+            )}
+            Done Categories
+          </Button>
+          <Button
+            onClick={() => setShowLocked(!showLocked)}
+            variant={showLocked ? "default" : "outline"}
+            className="flex items-center"
+          >
+            {showLocked ? (
+              <Check className="w-4 h-4 mr-2" />
+            ) : (
+              <X className="w-4 h-4 mr-2" />
+            )}
+            Locked Categories
+          </Button>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredCategories.map((category) => (
           <Link
@@ -98,7 +134,6 @@ export default function Home() {
           </Button>
         </Link>
       </div>
-      <AddCategory onAdd={handleAddCategory} />
     </div>
   );
 }
