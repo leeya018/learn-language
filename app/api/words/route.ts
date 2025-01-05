@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
-  const newWord: Word = await req.json();
+  const { word, translation, association } = await req.json();
 
   if (!category) {
     return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
   // Check if the word already exists
   const wordExists = words.some(
-    (w) => w.word.toLowerCase() === newWord.word.toLowerCase()
+    (w) => w.word.toLowerCase() === word.trim().toLowerCase()
   );
 
   if (wordExists) {
@@ -59,6 +59,15 @@ export async function POST(req: Request) {
       { status: 409 }
     );
   }
+
+  const newWord: Word = {
+    id: Date.now().toString(),
+    word: word.trim().toLowerCase(),
+    translation: translation.trim().toLowerCase(),
+    association: association || "",
+    points: 0,
+    category: category,
+  };
 
   words.push(newWord);
   fs.writeFileSync(filePath, JSON.stringify(words));
@@ -69,7 +78,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
-  const updatedWord: Word = await req.json();
+  const updatedWordData: Word = await req.json();
 
   if (!category) {
     return NextResponse.json(
@@ -87,8 +96,13 @@ export async function PUT(req: Request) {
   const fileContent = fs.readFileSync(filePath, "utf-8");
   let words: Word[] = JSON.parse(fileContent);
 
-  const index = words.findIndex((w) => w.id === updatedWord.id);
+  const index = words.findIndex((w) => w.id === updatedWordData.id);
   if (index !== -1) {
+    const updatedWord: Word = {
+      ...words[index],
+      ...updatedWordData,
+      category: category,
+    };
     words[index] = updatedWord;
     fs.writeFileSync(filePath, JSON.stringify(words));
     return NextResponse.json({ success: true });
@@ -123,4 +137,43 @@ export async function DELETE(req: Request) {
   fs.writeFileSync(filePath, JSON.stringify(updatedWords));
 
   return NextResponse.json({ success: true });
+}
+
+export async function PATCH(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const category = searchParams.get("category");
+  const id = searchParams.get("id");
+  const updates = await req.json();
+
+  if (!category || !id) {
+    return NextResponse.json(
+      { error: "Category and word ID are required" },
+      { status: 400 }
+    );
+  }
+
+  const filePath = path.join(categoriesDir, `${category}.json`);
+
+  if (!fs.existsSync(filePath)) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  const fileContent = fs.readFileSync(filePath, "utf-8");
+  let words: Word[] = JSON.parse(fileContent);
+
+  const wordIndex = words.findIndex((word) => word.id === id);
+  if (wordIndex === -1) {
+    return NextResponse.json({ error: "Word not found" }, { status: 404 });
+  }
+
+  // Update only the fields provided in the request
+  words[wordIndex] = {
+    ...words[wordIndex],
+    ...updates,
+    category: category, // Ensure category remains unchanged
+  };
+
+  fs.writeFileSync(filePath, JSON.stringify(words));
+
+  return NextResponse.json({ success: true, updatedWord: words[wordIndex] });
 }

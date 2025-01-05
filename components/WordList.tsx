@@ -55,27 +55,35 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       }
     };
 
-    const handleSave = async () => {
-      if (editedWord) {
-        const trimmedWord = {
-          ...editedWord,
-          word: editedWord.word.trim().toLowerCase(),
-          translation: editedWord.translation.trim().toLowerCase(),
-        };
-
-        const response = await fetch(`/api/words?category=${category}`, {
-          method: "PUT",
+    const updateWord = async (wordId: string, updates: Partial<Word>) => {
+      const response = await fetch(
+        `/api/words?category=${category}&id=${wordId}`,
+        {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(trimmedWord),
-        });
-
-        if (response.ok) {
-          setEditingId(null);
-          setEditedWord(null);
-          onUpdate();
+          body: JSON.stringify(updates),
         }
+      );
+
+      if (response.ok) {
+        onUpdate(); // Refresh the word list
+      } else {
+        console.error("Failed to update word");
+      }
+    };
+
+    const handleSave = async () => {
+      if (editedWord) {
+        const updates = {
+          word: editedWord.word.trim().toLowerCase(),
+          translation: editedWord.translation.trim().toLowerCase(),
+          association: editedWord.association,
+        };
+        await updateWord(editedWord.id, updates);
+        setEditingId(null);
+        setEditedWord(null);
       }
     };
 
@@ -140,21 +148,11 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       setGrade(calculatedGrade);
 
       // Update points for correct answers
-      const updatedWords = words.map((word, index) => {
-        if (results[index]) {
-          return { ...word, points: word.points + 1 };
+      for (let i = 0; i < words.length; i++) {
+        if (results[i]) {
+          await updateWord(words[i].id, { points: words[i].points + 1 });
         }
-        return word;
-      });
-
-      // Save updated words with new points
-      await fetch(`/api/words?category=${category}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedWords),
-      });
+      }
 
       // Save the grade
       await fetch("/api/grades", {

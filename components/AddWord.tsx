@@ -44,6 +44,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         translation: translation.trim().toLowerCase(),
         association,
         points: 0,
+        category: category,
       };
 
       try {

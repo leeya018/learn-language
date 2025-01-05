@@ -4,4 +4,5 @@ export interface Word {
   translation: string;
   association: string;
   points: number;
+  category: string;
 }
