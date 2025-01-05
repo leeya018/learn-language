@@ -46,6 +46,18 @@ export async function POST(req: Request) {
 
   const categories = readCategories();
 
+  const today = new Date().toDateString();
+  const categoryAddedToday = categories.some(
+    (c) => new Date(c.date).toDateString() === today
+  );
+
+  if (categoryAddedToday) {
+    return NextResponse.json(
+      { error: "You can only add one category per day" },
+      { status: 400 }
+    );
+  }
+
   // Check if the category already exists
   if (categories.some((c) => c.name.toLowerCase() === category.toLowerCase())) {
     return NextResponse.json(

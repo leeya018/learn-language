@@ -13,33 +13,44 @@ interface AddCategoryProps {
 export default function AddCategory({ onAdd }: AddCategoryProps) {
   const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
-    if (!newCategory.trim()) return;
+    if (!newCategory.trim()) {
+      setIsLoading(false);
+      return;
+    }
 
-    const response = await fetch("/api/categories", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ category: newCategory }),
-    });
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ category: newCategory }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      onAdd(data.category);
-      setNewCategory("");
-    } else {
-      const errorData = await response.json();
-      setError(errorData.error || "Failed to add category");
+      if (response.ok) {
+        const data = await response.json();
+        onAdd(data.category);
+        setNewCategory("");
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to add category");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex gap-2">
         <Input
           type="text"
@@ -47,11 +58,14 @@ export default function AddCategory({ onAdd }: AddCategoryProps) {
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
           className="flex-grow"
+          disabled={isLoading}
         />
-        <Button type="submit">Add Category</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Adding..." : "Add Category"}
+        </Button>
       </div>
       {error && (
-        <Alert variant="destructive" className="mt-2">
+        <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
