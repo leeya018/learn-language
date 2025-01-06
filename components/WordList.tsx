@@ -18,6 +18,7 @@ interface WordListProps {
   mode: "regular" | "test" | "testOpposite";
   category: string;
   onUpdate: () => void;
+  onUpdateScores: (words: Word[]) => void;
   isTestModeDisabled: boolean;
   setMode: (mode: "regular" | "test" | "testOpposite") => void;
 }
@@ -27,7 +28,18 @@ export type WordListRef = {
 };
 
 const WordList = forwardRef<WordListRef, WordListProps>(
-  ({ words, mode, category, onUpdate, setMode, isTestModeDisabled }, ref) => {
+  (
+    {
+      words,
+      mode,
+      category,
+      onUpdate,
+      onUpdateScores,
+      setMode,
+      isTestModeDisabled,
+    },
+    ref
+  ) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editedWord, setEditedWord] = useState<Word | null>(null);
     const [testAnswers, setTestAnswers] = useState<string[]>(
@@ -190,7 +202,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
         setMode("regular");
       }
 
-      onUpdate();
+      onUpdateScores(words);
       router.refresh();
     };
 

@@ -56,6 +56,16 @@ export default function CategoryPage() {
     setWords(data);
   };
 
+  const fetchWordsScores = async (words: Word[]) => {
+    const response = await fetch(`/api/words?category=${name}`);
+    const data = await response.json();
+    const updatedWords = words.map((itemA) => {
+      const matchingItem = data.find((itemB: Word) => itemB.id === itemA.id);
+      return matchingItem ? { ...itemA, points: matchingItem.points } : itemA;
+    });
+    setWords(updatedWords);
+  };
+
   const fetchCategoryDetails = async () => {
     const response = await fetch(`/api/categories?name=${name}`);
     if (response.ok) {
@@ -265,6 +275,7 @@ export default function CategoryPage() {
         mode={mode}
         category={name as string}
         onUpdate={fetchWords}
+        onUpdateScores={fetchWordsScores}
         ref={wordListRef}
         isTestModeDisabled={isTestLocked}
         setMode={setMode}
