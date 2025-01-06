@@ -4,6 +4,7 @@ import path from "path";
 import { Category } from "@/types/category";
 
 const dataDir = path.join(process.cwd(), "data");
+const categoriesDir = path.join(dataDir, "categories");
 const categoriesFilePath = path.join(dataDir, "categories.json");
 
 function readCategories(): Category[] {
@@ -15,9 +16,6 @@ function readCategories(): Category[] {
 }
 
 function writeCategories(categories: Category[]) {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
   fs.writeFileSync(categoriesFilePath, JSON.stringify(categories, null, 2));
 }
 
@@ -141,14 +139,34 @@ export async function DELETE(req: Request) {
     );
   }
 
-  const categories = readCategories();
-  const updatedCategories = categories.filter((c) => c.name !== name);
+  try {
+    // Step 1: Delete the [categoryName].json file
+    const categoryFilePath = path.join(categoriesDir, `${name}.json`);
+    if (fs.existsSync(categoryFilePath)) {
+      fs.unlinkSync(categoryFilePath);
+    } else {
+      console.warn(`Category file not found: ${categoryFilePath}`);
+    }
 
-  if (categories.length === updatedCategories.length) {
-    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    // Step 2: Remove the category from categories.json
+    const categories = readCategories();
+    const updatedCategories = categories.filter((c) => c.name !== name);
+
+    // if (categories.length === updatedCategories.length) {
+    //   return NextResponse.json(
+    //     { error: "Category not found" },
+    //     { status: 404 }
+    //   );
+    // }
+
+    writeCategories(updatedCategories);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return NextResponse.json(
+      { error: "Failed to delete category" },
+      { status: 500 }
+    );
   }
-
-  writeCategories(updatedCategories);
-
-  return NextResponse.json({ success: true });
 }

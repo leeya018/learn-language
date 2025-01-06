@@ -45,7 +45,8 @@ export default function DeleteCategoryModal({
         <DialogHeader>
           <DialogTitle>Delete Category</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete {categoryName}?
+            Are you sure you want to delete
+            <span className="font-bold"> {categoryName}</span>?
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
