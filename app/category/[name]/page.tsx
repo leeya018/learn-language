@@ -20,6 +20,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Word } from "../../../types/word";
+import { Category } from "../../../types/category";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 
 export default function CategoryPage() {
@@ -34,8 +35,9 @@ export default function CategoryPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isOrderedByPoints, setIsOrderedByPoints] = useState(false);
   const [showGPTSuggestions, setShowGPTSuggestions] = useState(false);
-  const [lastExamDate, setLastExamDate] = useState<string | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [isTestLocked, setIsTestLocked] = useState(false);
+  const [isTestOppositeLocked, setIsTestOppositeLocked] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
   const wordListRef = useRef<{ handleReset: () => void } | null>(null);
 
@@ -69,22 +71,22 @@ export default function CategoryPage() {
   const fetchCategoryDetails = async () => {
     const response = await fetch(`/api/categories?name=${name}`);
     if (response.ok) {
-      const categoryData = await response.json();
-      setLastExamDate(categoryData.lastExam);
-      checkTestLocked(categoryData.lastExam);
+      const categoryData: Category = await response.json();
+      setCategory(categoryData);
+      checkTestLocked(categoryData);
     } else {
       console.error("Failed to fetch category details");
     }
   };
 
-  const checkTestLocked = (lastExam: string | null) => {
-    if (!lastExam) {
-      setIsTestLocked(false);
-      return;
-    }
-    const lastExamDate = new Date(lastExam);
-    const today = new Date();
-    setIsTestLocked(lastExamDate.toDateString() === today.toDateString());
+  const checkTestLocked = (categoryData: Category) => {
+    const today = new Date().toDateString();
+    setIsTestLocked(
+      new Date(categoryData.lastExamTest || "").toDateString() === today
+    );
+    setIsTestOppositeLocked(
+      new Date(categoryData.lastExamOpposeTest || "").toDateString() === today
+    );
   };
 
   const handleCategoryNameUpdate = async () => {
@@ -94,13 +96,12 @@ export default function CategoryPage() {
       return;
     }
 
-    const response = await fetch("/api/categories", {
+    const response = await fetch(`/api/categories?name=${name}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        oldName: name,
         newName: editedCategoryName,
       }),
     });
@@ -155,6 +156,34 @@ export default function CategoryPage() {
     }
     fetchWords();
     setShowGPTSuggestions(false);
+  };
+
+  const handleTestCompletion = async (
+    testMode: "test" | "testOpposite",
+    grade: number
+  ) => {
+    if (grade === 100) {
+      const today = new Date().toISOString();
+      const updateField =
+        testMode === "test" ? "lastExamTest" : "lastExamOpposeTest";
+
+      const response = await fetch(`/api/categories?name=${name}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          [updateField]: today,
+          increaseLevel: true,
+        }),
+      });
+
+      if (response.ok) {
+        fetchCategoryDetails();
+      } else {
+        console.error("Failed to update category after test completion");
+      }
+    }
   };
 
   return (
@@ -238,7 +267,7 @@ export default function CategoryPage() {
             className={`${
               mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
-            disabled={isTestLocked}
+            disabled={isTestOppositeLocked}
           >
             Test Opposite
           </Button>
@@ -248,6 +277,7 @@ export default function CategoryPage() {
             <Shuffle className="mr-2 h-4 w-4" /> Scramble
           </Button>
           <Button
+            // onClick={handleOrderByPointsButton}
             onClick={handleOrderByPoints}
             variant="outline"
             className={`mr-2 ${
@@ -261,12 +291,15 @@ export default function CategoryPage() {
           </Button>
         </div>
       </div>
-      {isTestLocked && (
+      {(isTestLocked || isTestOppositeLocked) && (
         <Alert variant="destructive" className="mb-4">
           <Lock className="h-4 w-4 mr-2" />
           <AlertDescription>
-            Test mode is locked until tomorrow. You've completed the test
-            successfully today.
+            {isTestLocked && isTestOppositeLocked
+              ? "Both test modes are locked until tomorrow. You've completed both tests successfully today."
+              : isTestLocked
+              ? "Test mode is locked until tomorrow. You've completed this test successfully today."
+              : "Opposite test mode is locked until tomorrow. You've completed this test successfully today."}
           </AlertDescription>
         </Alert>
       )}
@@ -277,8 +310,11 @@ export default function CategoryPage() {
         onUpdate={fetchWords}
         onUpdateScores={fetchWordsScores}
         ref={wordListRef}
-        isTestModeDisabled={isTestLocked}
+        isTestModeDisabled={
+          mode === "test" ? isTestLocked : isTestOppositeLocked
+        }
         setMode={setMode}
+        onTestCompletion={handleTestCompletion}
       />
       {mode === "regular" && (
         <AddWord category={name as string} onAdd={fetchWords} />
@@ -301,7 +337,7 @@ export default function CategoryPage() {
       {showGPTSuggestions && (
         <GPTSuggestions
           category={name as string}
-          onClose={() => setShowGPTSuggestions(false)}
+          onClose={handleCloseSuggestions}
           onAddWords={handleAddSelectedWords}
         />
       )}

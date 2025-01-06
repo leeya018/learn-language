@@ -70,7 +70,8 @@ export async function POST(req: Request) {
     name: category,
     date: new Date().toISOString(),
     level: 0,
-    lastExam: null,
+    lastExamTest: null,
+    lastExamOpposeTest: null,
   };
 
   categories.push(newCategory);
@@ -82,7 +83,8 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const name = searchParams.get("name");
-  const { increaseLevel, lastExam, newName } = await req.json();
+  const { increaseLevel, lastExamTest, lastExamOpposeTest, newName } =
+    await req.json();
 
   if (!name) {
     return NextResponse.json(
@@ -102,8 +104,12 @@ export async function PUT(req: Request) {
     categories[categoryIndex].level += 1;
   }
 
-  if (lastExam) {
-    categories[categoryIndex].lastExam = lastExam;
+  if (lastExamTest) {
+    categories[categoryIndex].lastExamTest = lastExamTest;
+  }
+
+  if (lastExamOpposeTest) {
+    categories[categoryIndex].lastExamOpposeTest = lastExamOpposeTest;
   }
 
   if (newName) {

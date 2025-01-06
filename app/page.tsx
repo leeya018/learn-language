@@ -41,18 +41,22 @@ export default function Home() {
     }, 1000);
   };
 
-  const isTestLocked = (lastExam: string | null) => {
-    if (!lastExam) return false;
-    const lastExamDate = new Date(lastExam);
-    const today = new Date();
-    return lastExamDate.toDateString() === today.toDateString();
+  const isTestLocked = (category: Category) => {
+    const today = new Date().toDateString();
+    const { lastExamTest, lastExamOpposeTest } = category;
+    if (lastExamTest == null || lastExamOpposeTest == null) return false;
+    console.log({ today, category });
+    return (
+      new Date(lastExamTest).toDateString() === today &&
+      new Date(lastExamOpposeTest).toDateString() === today
+    );
   };
 
   const filteredCategories = categories.filter(
     (category) =>
       category.name.toLowerCase().includes(filter.toLowerCase()) &&
       (showDone || category.level < 4) &&
-      (showLocked || !isTestLocked(category.lastExam))
+      (showLocked || !isTestLocked(category))
   );
 
   return (
@@ -110,10 +114,10 @@ export default function Home() {
               Created: {new Date(category.date).toLocaleDateString()}
             </div>
             <div className="text-sm text-gray-500">Level: {category.level}</div>
-            {isTestLocked(category.lastExam) && (
+            {isTestLocked(category) && (
               <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full flex items-center">
                 <Lock className="w-4 h-4 mr-1" />
-                <span className="text-xs">Test Locked</span>
+                <span className="text-xs">Test Lock</span>
               </div>
             )}
             {category.level >= 4 && (

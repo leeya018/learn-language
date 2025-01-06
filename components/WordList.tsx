@@ -21,6 +21,7 @@ interface WordListProps {
   onUpdateScores: (words: Word[]) => void;
   isTestModeDisabled: boolean;
   setMode: (mode: "regular" | "test" | "testOpposite") => void;
+  onTestCompletion: (mode: "test" | "testOpposite", grade: number) => void;
 }
 
 export type WordListRef = {
@@ -37,6 +38,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       onUpdateScores,
       setMode,
       isTestModeDisabled,
+      onTestCompletion,
     },
     ref
   ) => {
@@ -60,6 +62,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
         setTestResults([]);
         setGrade(null);
         setExposedAssociations(words.map(() => false));
+        setTestCompleted(false);
       },
     }));
 
@@ -189,16 +192,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       });
 
       if (allCorrect) {
-        await fetch(`/api/categories?name=${category}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            increaseLevel: true,
-            lastExam: new Date().toISOString(),
-          }),
-        });
+        onTestCompletion(mode, calculatedGrade);
         setMode("regular");
       }
 
