@@ -19,6 +19,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const [association, setAssociation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const wordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,12 +37,39 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsLoading(true);
 
-    if (word.trim() && translation.trim()) {
+    let wordToAdd = word.trim().toLowerCase();
+    const translationToAdd = translation.trim().toLowerCase();
+
+    if (!wordToAdd && translationToAdd) {
+      try {
+        const response = await fetch("/api/gpt-word", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ translation: translationToAdd, category }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate word");
+        }
+
+        const data = await response.json();
+        wordToAdd = data.word.trim().toLowerCase();
+      } catch (error) {
+        setError("Failed to generate word. Please enter it manually.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (wordToAdd && translationToAdd) {
       const newWord: Word = {
         id: uuidv4(),
-        word: word.trim().toLowerCase(),
-        translation: translation.trim().toLowerCase(),
+        word: wordToAdd,
+        translation: translationToAdd,
         association,
         points: 0,
         category: category,
@@ -75,7 +103,11 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
           setError(error.message);
         }
       }
+    } else {
+      setError("Please provide both word and translation");
     }
+
+    setIsLoading(false);
   };
 
   return (
@@ -106,8 +138,8 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
           value={association}
           onChange={(e) => setAssociation(e.target.value)}
         />
-        <Button type="submit" className="w-full sm:w-auto">
-          Add Word
+        <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
+          {isLoading ? "Adding..." : "Add Word"}
         </Button>
       </form>
       {error && (
