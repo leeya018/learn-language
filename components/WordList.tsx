@@ -13,19 +13,21 @@ import { Input } from "@/components/ui/Input";
 import { Word } from "../types/word";
 import { useRouter } from "next/navigation";
 
-type Mode = "regular" | "test" | "testOpposite" | "practice";
-type PracticeSubMode = "tagalogToEnglish" | "englishToTagalog";
+type Mode = "regular" | "test" | "practice";
+type SubMode = "tagalogToEnglish" | "englishToTagalog";
 
 interface WordListProps {
   words: Word[];
   mode: Mode;
-  practiceSubMode: PracticeSubMode;
+  testSubMode: SubMode;
+  practiceSubMode: SubMode;
   category: string;
   onUpdate: () => void;
   onUpdateScores: (words: Word[]) => void;
-  isTestModeDisabled: boolean;
+  isTestTagalogToEnglishLocked: boolean;
+  isTestEnglishToTagalogLocked: boolean;
   setMode: (mode: Mode) => void;
-  onTestCompletion: (mode: "test" | "testOpposite", grade: number) => void;
+  onTestCompletion: (mode: "test", subMode: SubMode, grade: number) => void;
 }
 
 export type WordListRef = {
@@ -37,12 +39,14 @@ const WordList = forwardRef<WordListRef, WordListProps>(
     {
       words,
       mode,
+      testSubMode,
       practiceSubMode,
       category,
       onUpdate,
       onUpdateScores,
       setMode,
-      isTestModeDisabled,
+      isTestTagalogToEnglishLocked,
+      isTestEnglishToTagalogLocked,
       onTestCompletion,
     },
     ref
@@ -142,11 +146,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
         event.preventDefault();
         if (editingId) {
           handleSave();
-        } else if (
-          mode === "test" ||
-          mode === "testOpposite" ||
-          mode === "practice"
-        ) {
+        } else if (mode === "test" || mode === "practice") {
           const nextIndex = (index + 1) % words.length;
           inputRefs.current[nextIndex]?.focus();
         }
@@ -161,10 +161,8 @@ const WordList = forwardRef<WordListRef, WordListProps>(
 
       const results = words.map((word, index) => {
         const userAnswer = completedAnswers[index];
-        if (
-          mode === "test" ||
-          (mode === "practice" && practiceSubMode === "tagalogToEnglish")
-        ) {
+        const currentSubMode = mode === "test" ? testSubMode : practiceSubMode;
+        if (currentSubMode === "tagalogToEnglish") {
           return (
             userAnswer !== "" &&
             userAnswer?.toLowerCase() === word.translation?.toLowerCase()
@@ -183,9 +181,9 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       setGrade(calculatedGrade);
 
       const allCorrect = results.every((result) => result);
-      setTestCompleted(mode !== "practice" && allCorrect);
+      setTestCompleted(mode === "test" && allCorrect);
 
-      if (mode !== "practice") {
+      if (mode === "test") {
         for (let i = 0; i < words.length; i++) {
           if (results[i]) {
             await updateWord(words[i].id, { points: words[i].points + 1 });
@@ -199,13 +197,16 @@ const WordList = forwardRef<WordListRef, WordListProps>(
           },
           body: JSON.stringify({
             category,
-            mode: mode === "test" ? "regularMode" : "testOppositeMode",
+            mode:
+              testSubMode === "tagalogToEnglish"
+                ? "regularMode"
+                : "testOppositeMode",
             grade: calculatedGrade,
           }),
         });
 
         if (allCorrect) {
-          onTestCompletion(mode, calculatedGrade);
+          onTestCompletion(mode, testSubMode, calculatedGrade);
           setMode("regular");
         }
 
@@ -241,6 +242,17 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       } catch (error) {
         console.error("Error calling text-to-speech API:", error);
       }
+    };
+
+    const getCurrentSubMode = () => {
+      return mode === "test" ? testSubMode : practiceSubMode;
+    };
+
+    const isTestModeDisabled = () => {
+      if (mode !== "test") return false;
+      return testSubMode === "tagalogToEnglish"
+        ? isTestTagalogToEnglishLocked
+        : isTestEnglishToTagalogLocked;
     };
 
     return (
@@ -326,14 +338,10 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 )}
               </div>
             )}
-            {(mode === "test" ||
-              mode === "testOpposite" ||
-              mode === "practice") && (
+            {(mode === "test" || mode === "practice") && (
               <div className="flex items-center">
                 <span className="mr-2 w-1/5">
-                  {mode === "test" ||
-                  (mode === "practice" &&
-                    practiceSubMode === "tagalogToEnglish")
+                  {getCurrentSubMode() === "tagalogToEnglish"
                     ? word.word
                     : word.translation}
                 </span>
@@ -349,11 +357,10 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                       : ""
                   }`}
                   readOnly={
-                    mode !== "practice" &&
-                    (testResults.length > 0 || testCompleted)
+                    mode === "test" && (testResults.length > 0 || testCompleted)
                   }
                   disabled={
-                    mode !== "practice" && (testCompleted || isTestModeDisabled)
+                    mode === "test" && (testCompleted || isTestModeDisabled())
                   }
                   ref={(el) => (inputRefs.current[index] = el)}
                 />
@@ -362,8 +369,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                     onClick={() => handleExposeAssociation(index)}
                     className="p-1 bg-yellow-500 text-white rounded mr-2"
                     disabled={
-                      mode !== "practice" &&
-                      (testCompleted || isTestModeDisabled)
+                      mode === "test" && (testCompleted || isTestModeDisabled())
                     }
                   >
                     Expose
@@ -385,9 +391,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 <Button
                   onClick={() =>
                     speakWord(
-                      mode === "test" ||
-                        (mode === "practice" &&
-                          practiceSubMode === "tagalogToEnglish")
+                      getCurrentSubMode() === "tagalogToEnglish"
                         ? word.word
                         : word.translation
                     )
@@ -395,14 +399,12 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                   size="icon"
                   variant="outline"
                   aria-label={`Pronounce ${
-                    mode === "test" ||
-                    (mode === "practice" &&
-                      practiceSubMode === "tagalogToEnglish")
+                    getCurrentSubMode() === "tagalogToEnglish"
                       ? word.word
                       : word.translation
                   } in Tagalog`}
                   disabled={
-                    mode !== "practice" && (testCompleted || isTestModeDisabled)
+                    mode === "test" && (testCompleted || isTestModeDisabled())
                   }
                 >
                   <Volume2 className="h-4 w-4" />
@@ -411,15 +413,13 @@ const WordList = forwardRef<WordListRef, WordListProps>(
             )}
           </div>
         ))}
-        {(mode === "test" ||
-          mode === "testOpposite" ||
-          mode === "practice") && (
+        {(mode === "test" || mode === "practice") && (
           <div className="mt-4 flex items-center">
             <Button
               onClick={handleSubmitTest}
               className="p-2 bg-blue-500 text-white rounded mr-4"
               disabled={
-                mode !== "practice" && (testCompleted || isTestModeDisabled)
+                mode === "test" && (testCompleted || isTestModeDisabled())
               }
             >
               Submit
@@ -434,7 +434,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
               }}
               className="p-2 bg-gray-500 text-white rounded mr-4"
               disabled={
-                mode !== "practice" && (testCompleted || isTestModeDisabled)
+                mode === "test" && (testCompleted || isTestModeDisabled())
               }
             >
               Reset

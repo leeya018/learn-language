@@ -39,8 +39,13 @@ export default function CategoryPage() {
   const [isOrderedByPoints, setIsOrderedByPoints] = useState(false);
   const [showGPTSuggestions, setShowGPTSuggestions] = useState(false);
   const [category, setCategory] = useState<Category | null>(null);
-  const [isTestLocked, setIsTestLocked] = useState(false);
-  const [isTestOppositeLocked, setIsTestOppositeLocked] = useState(false);
+  const [isTestTagalogToEnglishLocked, setIsTestTagalogToEnglishLocked] =
+    useState(false);
+  const [isTestEnglishToTagalogLocked, setIsTestEnglishToTagalogLocked] =
+    useState(false);
+  const [testSubMode, setTestSubMode] = useState<
+    "tagalogToEnglish" | "englishToTagalog"
+  >("tagalogToEnglish");
   const editInputRef = useRef<HTMLInputElement>(null);
   const wordListRef = useRef<{ handleReset: () => void } | null>(null);
 
@@ -84,10 +89,10 @@ export default function CategoryPage() {
 
   const checkTestLocked = (categoryData: Category) => {
     const today = new Date().toDateString();
-    setIsTestLocked(
+    setIsTestTagalogToEnglishLocked(
       new Date(categoryData.lastExamTest || "").toDateString() === today
     );
-    setIsTestOppositeLocked(
+    setIsTestEnglishToTagalogLocked(
       new Date(categoryData.lastExamOpposeTest || "").toDateString() === today
     );
   };
@@ -162,13 +167,14 @@ export default function CategoryPage() {
   };
 
   const handleTestCompletion = async (
-    testMode: "test" | "testOpposite",
+    testMode: "test",
+    subMode: "tagalogToEnglish" | "englishToTagalog",
     grade: number
   ) => {
     if (grade === 100) {
       const today = new Date().toISOString();
       const updateField =
-        testMode === "test" ? "lastExamTest" : "lastExamOpposeTest";
+        subMode === "tagalogToEnglish" ? "lastExamTest" : "lastExamOpposeTest";
 
       const response = await fetch(`/api/categories?name=${name}`, {
         method: "PUT",
@@ -257,26 +263,7 @@ export default function CategoryPage() {
             >
               Regular
             </Button>
-            <Button
-              onClick={() => setMode("test")}
-              className={`mr-2 ${
-                mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
-              }`}
-              disabled={isTestLocked}
-            >
-              Test
-            </Button>
-            <Button
-              onClick={() => setMode("testOpposite")}
-              className={`mr-2 ${
-                mode === "testOpposite"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200"
-              }`}
-              disabled={isTestOppositeLocked}
-            >
-              Test Opposite
-            </Button>
+            {/*Removed Test Opposite Button*/}
             <Button
               onClick={() => setMode("practice")}
               className={`mr-2 ${
@@ -284,6 +271,17 @@ export default function CategoryPage() {
               }`}
             >
               Practice
+            </Button>
+            <Button
+              onClick={() => setMode("test")}
+              className={`mr-2 ${
+                mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+              disabled={
+                isTestTagalogToEnglishLocked && isTestEnglishToTagalogLocked
+              }
+            >
+              Test
             </Button>
           </div>
           {mode === "practice" && (
@@ -310,6 +308,32 @@ export default function CategoryPage() {
               </Button>
             </div>
           )}
+          {mode === "test" && (
+            <div>
+              <Button
+                onClick={() => setTestSubMode("tagalogToEnglish")}
+                className={`mr-2 ${
+                  testSubMode === "tagalogToEnglish"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200"
+                }`}
+                disabled={isTestTagalogToEnglishLocked}
+              >
+                Tagalog to English
+              </Button>
+              <Button
+                onClick={() => setTestSubMode("englishToTagalog")}
+                className={`mr-2 ${
+                  testSubMode === "englishToTagalog"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200"
+                }`}
+                disabled={isTestEnglishToTagalogLocked}
+              >
+                English to Tagalog
+              </Button>
+            </div>
+          )}
         </div>
         <div>
           <Button onClick={handleScramble} variant="outline" className="mr-2">
@@ -329,29 +353,29 @@ export default function CategoryPage() {
           </Button>
         </div>
       </div>
-      {(isTestLocked || isTestOppositeLocked) && (
+      {(isTestTagalogToEnglishLocked || isTestEnglishToTagalogLocked) && (
         <Alert variant="destructive" className="mb-4">
           <Lock className="h-4 w-4 mr-2" />
           <AlertDescription>
-            {isTestLocked && isTestOppositeLocked
+            {isTestTagalogToEnglishLocked && isTestEnglishToTagalogLocked
               ? "Both test modes are locked until tomorrow. You've completed both tests successfully today."
-              : isTestLocked
-              ? "Test mode is locked until tomorrow. You've completed this test successfully today."
-              : "Opposite test mode is locked until tomorrow. You've completed this test successfully today."}
+              : isTestTagalogToEnglishLocked
+              ? "Tagalog to English test mode is locked until tomorrow. You've completed this test successfully today."
+              : "English to Tagalog test mode is locked until tomorrow. You've completed this test successfully today."}
           </AlertDescription>
         </Alert>
       )}
       <WordList
         words={words}
         mode={mode}
+        testSubMode={testSubMode}
         practiceSubMode={practiceSubMode}
         category={name as string}
         onUpdate={fetchWords}
         onUpdateScores={fetchWordsScores}
         ref={wordListRef}
-        isTestModeDisabled={
-          mode === "test" ? isTestLocked : isTestOppositeLocked
-        }
+        isTestTagalogToEnglishLocked={isTestTagalogToEnglishLocked}
+        isTestEnglishToTagalogLocked={isTestEnglishToTagalogLocked}
         setMode={setMode}
         onTestCompletion={handleTestCompletion}
       />
