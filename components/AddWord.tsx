@@ -118,18 +118,18 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
       >
         <Input
           type="text"
+          placeholder="Translation"
+          className="w-full sm:w-1/4"
+          value={translation}
+          onChange={(e) => setTranslation(e.target.value)}
+        />
+        <Input
+          type="text"
           placeholder="Word"
           className="w-full sm:w-1/4"
           value={word}
           onChange={(e) => setWord(e.target.value)}
           ref={wordInputRef}
-        />
-        <Input
-          type="text"
-          placeholder="Translation"
-          className="w-full sm:w-1/4"
-          value={translation}
-          onChange={(e) => setTranslation(e.target.value)}
         />
         <Input
           type="text"
