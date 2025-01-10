@@ -13,14 +13,18 @@ import { Input } from "@/components/ui/Input";
 import { Word } from "../types/word";
 import { useRouter } from "next/navigation";
 
+type Mode = "regular" | "test" | "testOpposite" | "practice";
+type PracticeSubMode = "tagalogToEnglish" | "englishToTagalog";
+
 interface WordListProps {
   words: Word[];
-  mode: "regular" | "test" | "testOpposite";
+  mode: Mode;
+  practiceSubMode: PracticeSubMode;
   category: string;
   onUpdate: () => void;
   onUpdateScores: (words: Word[]) => void;
   isTestModeDisabled: boolean;
-  setMode: (mode: "regular" | "test" | "testOpposite") => void;
+  setMode: (mode: Mode) => void;
   onTestCompletion: (mode: "test" | "testOpposite", grade: number) => void;
 }
 
@@ -33,6 +37,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
     {
       words,
       mode,
+      practiceSubMode,
       category,
       onUpdate,
       onUpdateScores,
@@ -137,7 +142,11 @@ const WordList = forwardRef<WordListRef, WordListProps>(
         event.preventDefault();
         if (editingId) {
           handleSave();
-        } else if (mode === "test" || mode === "testOpposite") {
+        } else if (
+          mode === "test" ||
+          mode === "testOpposite" ||
+          mode === "practice"
+        ) {
           const nextIndex = (index + 1) % words.length;
           inputRefs.current[nextIndex]?.focus();
         }
@@ -152,7 +161,10 @@ const WordList = forwardRef<WordListRef, WordListProps>(
 
       const results = words.map((word, index) => {
         const userAnswer = completedAnswers[index];
-        if (mode === "test") {
+        if (
+          mode === "test" ||
+          (mode === "practice" && practiceSubMode === "tagalogToEnglish")
+        ) {
           return (
             userAnswer !== "" &&
             userAnswer?.toLowerCase() === word.translation?.toLowerCase()
@@ -171,33 +183,35 @@ const WordList = forwardRef<WordListRef, WordListProps>(
       setGrade(calculatedGrade);
 
       const allCorrect = results.every((result) => result);
-      setTestCompleted(allCorrect);
+      setTestCompleted(mode !== "practice" && allCorrect);
 
-      for (let i = 0; i < words.length; i++) {
-        if (results[i]) {
-          await updateWord(words[i].id, { points: words[i].points + 1 });
+      if (mode !== "practice") {
+        for (let i = 0; i < words.length; i++) {
+          if (results[i]) {
+            await updateWord(words[i].id, { points: words[i].points + 1 });
+          }
         }
+
+        await fetch("/api/grades", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            category,
+            mode: mode === "test" ? "regularMode" : "testOppositeMode",
+            grade: calculatedGrade,
+          }),
+        });
+
+        if (allCorrect) {
+          onTestCompletion(mode, calculatedGrade);
+          setMode("regular");
+        }
+
+        onUpdateScores(words);
+        router.refresh();
       }
-
-      await fetch("/api/grades", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category,
-          mode: mode === "test" ? "regularMode" : "testOppositeMode",
-          grade: calculatedGrade,
-        }),
-      });
-
-      if (allCorrect) {
-        onTestCompletion(mode, calculatedGrade);
-        setMode("regular");
-      }
-
-      onUpdateScores(words);
-      router.refresh();
     };
 
     const handleExposeAssociation = (index: number) => {
@@ -312,10 +326,16 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 )}
               </div>
             )}
-            {(mode === "test" || mode === "testOpposite") && (
+            {(mode === "test" ||
+              mode === "testOpposite" ||
+              mode === "practice") && (
               <div className="flex items-center">
                 <span className="mr-2 w-1/5">
-                  {mode === "test" ? word.word : word.translation}
+                  {mode === "test" ||
+                  (mode === "practice" &&
+                    practiceSubMode === "tagalogToEnglish")
+                    ? word.word
+                    : word.translation}
                 </span>
                 <Input
                   type="text"
@@ -328,15 +348,23 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                       ? "bg-red-100"
                       : ""
                   }`}
-                  readOnly={testResults.length > 0 || testCompleted}
-                  disabled={testCompleted || isTestModeDisabled}
+                  readOnly={
+                    mode !== "practice" &&
+                    (testResults.length > 0 || testCompleted)
+                  }
+                  disabled={
+                    mode !== "practice" && (testCompleted || isTestModeDisabled)
+                  }
                   ref={(el) => (inputRefs.current[index] = el)}
                 />
                 {word.association && (
                   <Button
                     onClick={() => handleExposeAssociation(index)}
                     className="p-1 bg-yellow-500 text-white rounded mr-2"
-                    disabled={testCompleted || isTestModeDisabled}
+                    disabled={
+                      mode !== "practice" &&
+                      (testCompleted || isTestModeDisabled)
+                    }
                   >
                     Expose
                   </Button>
@@ -356,14 +384,26 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 <span className="mr-2 w-1/10">Points: {word.points}</span>
                 <Button
                   onClick={() =>
-                    speakWord(mode === "test" ? word.word : word.translation)
+                    speakWord(
+                      mode === "test" ||
+                        (mode === "practice" &&
+                          practiceSubMode === "tagalogToEnglish")
+                        ? word.word
+                        : word.translation
+                    )
                   }
                   size="icon"
                   variant="outline"
                   aria-label={`Pronounce ${
-                    mode === "test" ? word.word : word.translation
+                    mode === "test" ||
+                    (mode === "practice" &&
+                      practiceSubMode === "tagalogToEnglish")
+                      ? word.word
+                      : word.translation
                   } in Tagalog`}
-                  disabled={testCompleted || isTestModeDisabled}
+                  disabled={
+                    mode !== "practice" && (testCompleted || isTestModeDisabled)
+                  }
                 >
                   <Volume2 className="h-4 w-4" />
                 </Button>
@@ -371,12 +411,16 @@ const WordList = forwardRef<WordListRef, WordListProps>(
             )}
           </div>
         ))}
-        {(mode === "test" || mode === "testOpposite") && (
+        {(mode === "test" ||
+          mode === "testOpposite" ||
+          mode === "practice") && (
           <div className="mt-4 flex items-center">
             <Button
               onClick={handleSubmitTest}
               className="p-2 bg-blue-500 text-white rounded mr-4"
-              disabled={testCompleted || isTestModeDisabled}
+              disabled={
+                mode !== "practice" && (testCompleted || isTestModeDisabled)
+              }
             >
               Submit
             </Button>
@@ -389,7 +433,9 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 setTestCompleted(false);
               }}
               className="p-2 bg-gray-500 text-white rounded mr-4"
-              disabled={testCompleted || isTestModeDisabled}
+              disabled={
+                mode !== "practice" && (testCompleted || isTestModeDisabled)
+              }
             >
               Reset
             </Button>

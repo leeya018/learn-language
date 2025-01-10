@@ -23,13 +23,16 @@ import { Word } from "../../../types/word";
 import { Category } from "../../../types/category";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 
+type Mode = "regular" | "test" | "testOpposite" | "practice";
+type PracticeSubMode = "tagalogToEnglish" | "englishToTagalog";
+
 export default function CategoryPage() {
   const router = useRouter();
   const { name } = useParams();
   const [words, setWords] = useState<Word[]>([]);
-  const [mode, setMode] = useState<"regular" | "test" | "testOpposite">(
-    "regular"
-  );
+  const [mode, setMode] = useState<Mode>("regular");
+  const [practiceSubMode, setPracticeSubMode] =
+    useState<PracticeSubMode>("tagalogToEnglish");
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editedCategoryName, setEditedCategoryName] = useState(name as string);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -243,41 +246,76 @@ export default function CategoryPage() {
           </div>
         )}
       </div>
-      <div className="mb-4 flex justify-between items-center">
-        <div>
-          <Button
-            onClick={() => setMode("regular")}
-            className={`mr-2 ${
-              mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Regular
-          </Button>
-          <Button
-            onClick={() => setMode("test")}
-            className={`mr-2 ${
-              mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-            disabled={isTestLocked}
-          >
-            Test
-          </Button>
-          <Button
-            onClick={() => setMode("testOpposite")}
-            className={`${
-              mode === "testOpposite" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-            disabled={isTestOppositeLocked}
-          >
-            Test Opposite
-          </Button>
+      <div className="mb-4 flex flex-wrap justify-between items-center">
+        <div className="space-y-2">
+          <div>
+            <Button
+              onClick={() => setMode("regular")}
+              className={`mr-2 ${
+                mode === "regular" ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              Regular
+            </Button>
+            <Button
+              onClick={() => setMode("test")}
+              className={`mr-2 ${
+                mode === "test" ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+              disabled={isTestLocked}
+            >
+              Test
+            </Button>
+            <Button
+              onClick={() => setMode("testOpposite")}
+              className={`mr-2 ${
+                mode === "testOpposite"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200"
+              }`}
+              disabled={isTestOppositeLocked}
+            >
+              Test Opposite
+            </Button>
+            <Button
+              onClick={() => setMode("practice")}
+              className={`mr-2 ${
+                mode === "practice" ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              Practice
+            </Button>
+          </div>
+          {mode === "practice" && (
+            <div>
+              <Button
+                onClick={() => setPracticeSubMode("tagalogToEnglish")}
+                className={`mr-2 ${
+                  practiceSubMode === "tagalogToEnglish"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                Tagalog to English
+              </Button>
+              <Button
+                onClick={() => setPracticeSubMode("englishToTagalog")}
+                className={`mr-2 ${
+                  practiceSubMode === "englishToTagalog"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                English to Tagalog
+              </Button>
+            </div>
+          )}
         </div>
         <div>
           <Button onClick={handleScramble} variant="outline" className="mr-2">
             <Shuffle className="mr-2 h-4 w-4" /> Scramble
           </Button>
           <Button
-            // onClick={handleOrderByPointsButton}
             onClick={handleOrderByPoints}
             variant="outline"
             className={`mr-2 ${
@@ -306,6 +344,7 @@ export default function CategoryPage() {
       <WordList
         words={words}
         mode={mode}
+        practiceSubMode={practiceSubMode}
         category={name as string}
         onUpdate={fetchWords}
         onUpdateScores={fetchWordsScores}
