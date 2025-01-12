@@ -20,7 +20,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const wordInputRef = useRef<HTMLInputElement>(null);
+  const traslationInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (error || success) {
@@ -95,8 +95,8 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
         setSuccess("Word added successfully!");
         onAdd();
 
-        if (wordInputRef.current) {
-          wordInputRef.current.focus();
+        if (traslationInputRef.current) {
+          traslationInputRef.current.focus();
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -122,6 +122,7 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
           className="w-full sm:w-1/4"
           value={translation}
           onChange={(e) => setTranslation(e.target.value)}
+          ref={traslationInputRef}
         />
         <Input
           type="text"
@@ -129,7 +130,6 @@ export default function AddWord({ category, onAdd }: AddWordProps) {
           className="w-full sm:w-1/4"
           value={word}
           onChange={(e) => setWord(e.target.value)}
-          ref={wordInputRef}
         />
         <Input
           type="text"
