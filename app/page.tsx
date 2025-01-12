@@ -21,7 +21,12 @@ export default function Home() {
   const fetchCategories = async () => {
     const response = await fetch("/api/categories");
     const data: Category[] = await response.json();
-    setCategories(data.map((category) => ({ ...category, isNew: false })));
+    const sortedData = data.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    setCategories(
+      sortedData.map((category) => ({ ...category, isNew: false }))
+    );
   };
 
   const handleAddCategory = (newCategory: Category) => {
@@ -111,7 +116,14 @@ export default function Home() {
           >
             <div className="font-bold">{category.name}</div>
             <div className="text-sm text-gray-500">
-              Created: {new Date(category.date).toLocaleDateString()}
+              Created:{" "}
+              {new Date(category.date)
+                .toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+                .replace(/\//g, "/")}
             </div>
             <div className="text-sm text-gray-500">Level: {category.level}</div>
             {isTestLocked(category) && (
