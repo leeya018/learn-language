@@ -23,7 +23,9 @@ import { Word } from "../../../types/word";
 import { Category } from "../../../types/category";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 
-type Mode = "regular" | "test" | "testOpposite" | "practice";
+const MAX_WORDS = 20;
+
+type Mode = "regular" | "test" | "practice";
 type PracticeSubMode = "tagalogToEnglish" | "englishToTagalog";
 
 export default function CategoryPage() {
@@ -263,7 +265,6 @@ export default function CategoryPage() {
             >
               Regular
             </Button>
-            {/*Removed Test Opposite Button*/}
             <Button
               onClick={() => setMode("practice")}
               className={`mr-2 ${
@@ -379,8 +380,14 @@ export default function CategoryPage() {
         setMode={setMode}
         onTestCompletion={handleTestCompletion}
       />
-      {mode === "regular" && (
+      {mode === "regular" && words.length < MAX_WORDS && (
         <AddWord category={name as string} onAdd={fetchWords} />
+      )}
+      {mode === "regular" && words.length >= MAX_WORDS && (
+        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          You've reached the maximum of {MAX_WORDS} words for this category.
+          Remove some words to add new ones.
+        </div>
       )}
       <DeleteCategoryModal
         isOpen={isDeleteModalOpen}
