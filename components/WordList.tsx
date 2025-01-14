@@ -264,6 +264,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                 onDoubleClick={() => handleDoubleClick(word)}
                 className="p-2 border rounded cursor-pointer flex items-center"
               >
+                <span className="mr-2 font-bold">{index + 1}.</span>
                 {editingId === word.id ? (
                   <>
                     <Input
@@ -340,6 +341,7 @@ const WordList = forwardRef<WordListRef, WordListProps>(
             )}
             {(mode === "test" || mode === "practice") && (
               <div className="flex items-center">
+                <span className="mr-2 font-bold w-8">{index + 1}.</span>
                 <span className="mr-2 w-1/5">
                   {getCurrentSubMode() === "tagalogToEnglish"
                     ? word.word
