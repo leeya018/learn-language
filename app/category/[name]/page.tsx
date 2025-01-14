@@ -48,6 +48,7 @@ export default function CategoryPage() {
   const [testSubMode, setTestSubMode] = useState<
     "tagalogToEnglish" | "englishToTagalog"
   >("tagalogToEnglish");
+  const [searchTerm, setSearchTerm] = useState(""); // Added search term state
   const editInputRef = useRef<HTMLInputElement>(null);
   const wordListRef = useRef<{ handleReset: () => void } | null>(null);
 
@@ -196,6 +197,12 @@ export default function CategoryPage() {
       }
     }
   };
+
+  const filteredWords = words.filter(
+    (word) =>
+      word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      word.translation.toLowerCase().includes(searchTerm.toLowerCase())
+  ); // Added filter function
 
   return (
     <div className="container mx-auto p-4">
@@ -354,6 +361,17 @@ export default function CategoryPage() {
           </Button>
         </div>
       </div>
+      <div className="mb-4">
+        {" "}
+        {/* Added search input */}
+        <Input
+          type="text"
+          placeholder="Search words..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full"
+        />
+      </div>
       {(isTestTagalogToEnglishLocked || isTestEnglishToTagalogLocked) && (
         <Alert variant="destructive" className="mb-4">
           <Lock className="h-4 w-4 mr-2" />
@@ -367,7 +385,7 @@ export default function CategoryPage() {
         </Alert>
       )}
       <WordList
-        words={words}
+        words={filteredWords} // Updated to use filteredWords
         mode={mode}
         testSubMode={testSubMode}
         practiceSubMode={practiceSubMode}
