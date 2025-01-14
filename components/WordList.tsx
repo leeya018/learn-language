@@ -366,16 +366,20 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                   }
                   ref={(el) => (inputRefs.current[index] = el)}
                 />
-                {(mode === "practice" || word.association) && (
+                {mode === "practice" && (
                   <Button
                     onClick={() => handleExposeAssociation(index)}
                     className="p-1 bg-yellow-500 text-white rounded mr-2"
-                    disabled={
-                      mode === "test" && (testCompleted || isTestModeDisabled())
-                    }
                   >
                     Expose
                   </Button>
+                )}
+                {mode === "practice" && exposedAssociations[index] && (
+                  <span className="mr-2 w-1/4">
+                    {practiceSubMode === "tagalogToEnglish"
+                      ? word.translation
+                      : word.association}
+                  </span>
                 )}
                 {testResults[index] !== undefined && (
                   <span
@@ -384,14 +388,6 @@ const WordList = forwardRef<WordListRef, WordListProps>(
                     } mr-2`}
                   >
                     {testResults[index] ? "Correct" : "Wrong"}
-                  </span>
-                )}
-                {exposedAssociations[index] && (
-                  <span className="mr-2 w-1/4">
-                    {mode === "practice" &&
-                    practiceSubMode === "tagalogToEnglish"
-                      ? word.translation
-                      : word.association}
                   </span>
                 )}
                 <span className="mr-2 w-1/10">Points: {word.points}</span>
